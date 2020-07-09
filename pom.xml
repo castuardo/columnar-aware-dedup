@@ -69,16 +69,16 @@
 	            	<configuration>
 	            		<fileSets>
 			                <fileSet>
-			                  <sourceFile>conf/log4j.xml</sourceFile>
-			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/log4j.xml</destinationFile>
+			                  <sourceFile>conf/log4j-default.xml</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/log4j-default.xml</destinationFile>
 			                </fileSet>
 			                <fileSet>
-			                  <sourceFile>scripts/environment.sh</sourceFile>
-			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/environment.sh</destinationFile>
+			                  <sourceFile>scripts/testmain/environment.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/testmain/environment.sh</destinationFile>
 			                </fileSet>  
 			                <fileSet>
-			                  <sourceFile>scripts/runTestMain.sh</sourceFile>
-			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/runTestMain.sh</destinationFile>
+			                  <sourceFile>scripts/testmain/runTestMain.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/testmain/runTestMain.sh</destinationFile>
 			                </fileSet>               
               			</fileSets>
 	            	</configuration>
