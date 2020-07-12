@@ -68,6 +68,7 @@
 	            	</goals>
 	            	<configuration>
 	            		<fileSets>
+			                <!-- simple test (testmain/runTestMain.sh) -->
 			                <fileSet>
 			                  <sourceFile>conf/log4j-default.xml</sourceFile>
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/log4j-default.xml</destinationFile>
@@ -79,7 +80,32 @@
 			                <fileSet>
 			                  <sourceFile>scripts/testmain/runTestMain.sh</sourceFile>
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/testmain/runTestMain.sh</destinationFile>
-			                </fileSet>               
+			                </fileSet>   
+			                <!-- plain test (plain/runTestPlain.sh) -->  
+			                <fileSet>
+			                  <sourceFile>conf/server-default.xml</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/server-default.xml</destinationFile>
+			                </fileSet>
+			                <fileSet>
+			                  <sourceFile>conf/client-default.xml</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/client-default.xml</destinationFile>
+			                </fileSet>
+			                <fileSet>
+			                  <sourceFile>scripts/plain/environment.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/plain/environment.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/plain/startServer.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/plain/startServer.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/plain/startClient.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/plain/startClient.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/plain/runTestPlain.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/plain/runTestPlain.sh</destinationFile>
+			                </fileSet>        
               			</fileSets>
 	            	</configuration>
 	          	</execution>

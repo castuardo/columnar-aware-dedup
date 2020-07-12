@@ -8,17 +8,12 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import vmware.speedup.cawd.common.BytesUtil;
 import vmware.speedup.cawd.dedup.ColumnarChunkStore;
 
 public abstract class SpeedupStreamer {
 
 	protected ColumnarChunkStore chunkStore = null;
-	
-	public SpeedupStreamer(ColumnarChunkStore chunkStore) {
-		this.chunkStore = chunkStore;
-	}
 	
 	public abstract TransferStats transferFile(String fileName, InputStream is, OutputStream os) throws IOException;
 	
@@ -43,10 +38,10 @@ public abstract class SpeedupStreamer {
 		@Override
 		public String toString() {
 			return new StringBuilder().append("file=") 
-									  .append(filePath)
-									  .append(", stats=")
-									  .append(Arrays.toString(stats.toArray()))
-									  .toString();
+					.append(filePath)
+					.append(", stats=")
+					.append(Arrays.toString(stats.toArray()))
+					.toString();
 		}
 	}
 	
@@ -75,22 +70,21 @@ public abstract class SpeedupStreamer {
 		@Override
 		public String toString() {
 			return new StringBuilder().append(type.name())
-									  .append("=")
-									  .append(value)
-									  .append(" ")
-									  .append(unit.name())
-									  .toString();
+					.append("=")
+					.append(value)
+					.append(" ")
+					.append(unit.name())
+					.toString();
 		}
 		
 	}
 	
 	public static class PlainSpeedupStreamer extends SpeedupStreamer {
-
+		
 		private int bufferSize = 0;
 
-		public PlainSpeedupStreamer(int bufferSize) {
-			super(null);
-			this.bufferSize = bufferSize;
+		public PlainSpeedupStreamer() {
+			this.bufferSize = Integer.valueOf(System.getProperty("cawd.streamer.plain.bufferSize", "2048"));
 		}
 		
 		@Override
@@ -98,10 +92,17 @@ public abstract class SpeedupStreamer {
 			TransferStats stats = new TransferStats(fileName);
 			FileInputStream fis = null;
 			try {
-				// open the file
+				File targetFile = new File(fileName);
+				// we will first send the name of the file (and the length of the name)
+				// this will initiate transmission. We also send the file size
+				String name = targetFile.getName();
+				os.write(BytesUtil.longToBytes(name.length()));
+				os.write(name.getBytes());
+				os.write(BytesUtil.longToBytes(targetFile.length()), 0, Long.BYTES);
+				// now, we open the file and start sending it
 				fis = new FileInputStream(fileName);
 				// just send in little pieces...
-				int remaining = (int)new File(fileName).length();
+				int remaining = (int)targetFile.length();
 				int dataSize =  bufferSize - Long.BYTES;
 				byte[] buffer = new byte[bufferSize];
 				double bytesSent = 0;

@@ -15,29 +15,32 @@ import vmware.speedup.cawd.net.SpeedupStreamer.TransferStats;
 public class SpeedupClient extends Thread {
 
 	private static final Logger logger = LogManager.getLogger(SpeedupClient.class);
+	public static final String C_HOST = "cawd.client.host";
+	public static final String C_PORT = "cawd.client.port";
+	public static final String C_IN = "cawd.client.input";
+	public static final String C_FILTERS = "cawd.client.filters";
 	
 	private String host = null;
 	private int port = 0;
-	private int connectionTimeout = 0;
-	private int sendTimeout = 0;
 	private String input = null;
+	private List<String> fileFilters = null;
 	private SpeedupStreamer streamer = null;
 	
-	public SpeedupClient(int id, String host, int port, int connectionTimeout, int sendTimeout, String input, SpeedupStreamer streamer) {
+	public SpeedupClient(
+			int id, String host, int port,String input, SpeedupStreamer streamer, List<String> fileFilters) {
 		setName("SpeedupClient[" + id + "]");
 		this.host = host;
 		this.port = port;
-		this.connectionTimeout = connectionTimeout;
-		this.sendTimeout = sendTimeout;
 		this.input = input;
 		this.streamer = streamer;
+		this.fileFilters.addAll(fileFilters);
 	}
 	
 	private Socket connectUntilPossible() {
 		try {
 			Socket socket = new Socket();
-			socket.connect(new InetSocketAddress(host, port), connectionTimeout);
-			socket.setSoTimeout(sendTimeout);
+			socket.connect(new InetSocketAddress(host, port), 0);
+			socket.setSoTimeout(0);
 			socket.setTcpNoDelay(true);
 			return socket;
 		}
@@ -51,17 +54,25 @@ public class SpeedupClient extends Thread {
 		return null;
 	}
 	
+	private boolean isInFilter(String file) {
+		for(String filter : fileFilters) {
+			if(file.endsWith(filter)) return true;
+		}
+		return false;
+	}
+	
 	@Override
 	public void run() {
 		// start logging something...
-		logger.info("{} starting on host={}, port={}, connto={}, sendto={}, inputDir={}, streamerClass={}", 
-				getName(), host, port, connectionTimeout, sendTimeout, input, streamer.getClass().getName());
+		logger.info(
+				"{} starting on host={}, port={}, inputDir={}, streamerClass={}, filters={}", 
+				getName(), host, port, input, streamer.getClass().getName(), Arrays.toString(fileFilters.toArray()));
+		
 		Socket socket = null;
 		File inputFile = new File(input);
-		
-		// if no input directory, then get out
+		// if no input file/directory, then get out
 		if(!inputFile.exists()) {
-			logger.error("{} is not a valid firle/directory, exiting...");
+			logger.error("{} is not a valid file/directory, exiting...");
 			return;
 		}
 		
@@ -84,10 +95,11 @@ public class SpeedupClient extends Thread {
 			// now do the hustle..
 			if(files != null && files.size() > 0) {
 				for(File file : files) {
-					if(file.getName().endsWith(".parquet")) {
+					if(isInFilter(file.getName())) {
 						// transfer this file...
-						TransferStats stats = streamer.transferFile(file.getAbsolutePath(), 
-								new BufferedInputStream(socket.getInputStream()),
+						TransferStats stats = streamer.transferFile(
+								file.getAbsolutePath(), 
+								new BufferedInputStream(socket.getInputStream()), 
 								new BufferedOutputStream(socket.getOutputStream()));
 						// log stats
 						logger.info("{}", stats);
