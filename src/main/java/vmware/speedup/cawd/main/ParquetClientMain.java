@@ -16,7 +16,7 @@ public class ParquetClientMain {
 
 	public static void main(String[] args) {
 		ParquetClientMain main = new ParquetClientMain();
-		logger.info("Creating server...");
+		logger.info("Creating client...");
 		try {
 			// create it...
 			SpeedupClient client = main.createClient(0, System.getProperties());
@@ -26,7 +26,7 @@ public class ParquetClientMain {
 			client.join();
 		}
 		catch(Exception e) {
-			logger.error("Uncaught error when running server...", e);
+			logger.error("Uncaught error when running client...", e);
 		}
 	}
 	
@@ -37,7 +37,7 @@ public class ParquetClientMain {
 		List<String> filters = Arrays.asList(props.getProperty(SpeedupClient.C_FILTERS, ".parquet").split(","));
 		SpeedupStreamer streamer = (SpeedupStreamer)(
 				Class.forName(
-						System.getProperty(S_TYPE, "vmware.speedup.cawd.net.SpeedupStreamer.PlainSpeedupStreamer")).newInstance());
+						System.getProperty(S_TYPE, "vmware.speedup.cawd.net.SpeedupStreamer$PlainSpeedupStreamer")).newInstance());
 		return new SpeedupClient(id, host, port, input, streamer, filters);
 	}
 }

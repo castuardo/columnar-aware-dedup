@@ -5,10 +5,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import vmware.speedup.cawd.common.BytesUtil;
+import vmware.speedup.cawd.common.TransferStats;
+import vmware.speedup.cawd.common.TransferStats.TransferStatValue;
 import vmware.speedup.cawd.dedup.ColumnarChunkStore;
 
 public abstract class SpeedupStreamer {
@@ -17,114 +18,81 @@ public abstract class SpeedupStreamer {
 	
 	public abstract TransferStats transferFile(String fileName, InputStream is, OutputStream os) throws IOException;
 	
-	public static class TransferStats {
-		
-		private String filePath = null;
-		private List<TransferStatValue> stats = null;
-		
-		public TransferStats(String filePath) {
-			this.filePath = filePath;
-			this.stats = new ArrayList<TransferStatValue>();
-		}
-
-		public String getFilePath() {
-			return filePath;
-		}
-
-		public List<TransferStatValue> getStats() {
-			return stats;
-		}
-		
-		@Override
-		public String toString() {
-			return new StringBuilder().append("file=") 
-					.append(filePath)
-					.append(", stats=")
-					.append(Arrays.toString(stats.toArray()))
-					.toString();
-		}
-	}
-	
-	public static class TransferStatValue {
-		
-		public enum Type {
-			TransferBytes,
-			TransferTime
-		}
-		
-		public enum Unit {
-			Bytes,
-			Milliseconds
-		};
-		
-		private Type type = null;
-		private double value = 0.0;
-		private Unit unit = null;
-		
-		public TransferStatValue(Type type, double value, Unit unit) {
-			this.type = type;
-			this.value = value;
-			this.unit = unit;
-		}
-		
-		@Override
-		public String toString() {
-			return new StringBuilder().append(type.name())
-					.append("=")
-					.append(value)
-					.append(" ")
-					.append(unit.name())
-					.toString();
-		}
-		
-	}
-	
 	public static class PlainSpeedupStreamer extends SpeedupStreamer {
+		
+		private static final Logger logger = LogManager.getLogger(PlainSpeedupStreamer.class);
 		
 		private int bufferSize = 0;
 
 		public PlainSpeedupStreamer() {
-			this.bufferSize = Integer.valueOf(System.getProperty("cawd.streamer.plain.bufferSize", "2048"));
+			this.bufferSize = Integer.valueOf(System.getProperty("cawd.streamer.plain.bufferSize", "4096"));
 		}
 		
 		@Override
 		public TransferStats transferFile(String fileName, InputStream is, OutputStream os) throws IOException {
 			TransferStats stats = new TransferStats(fileName);
 			FileInputStream fis = null;
+			long extraTransferBytes = 0;
 			try {
+				logger.debug("Starting file transfer for {}", fileName);
 				File targetFile = new File(fileName);
 				// we will first send the name of the file (and the length of the name)
 				// this will initiate transmission. We also send the file size
 				String name = targetFile.getName();
 				os.write(BytesUtil.longToBytes(name.length()));
+				extraTransferBytes += Long.BYTES;
 				os.write(name.getBytes());
-				os.write(BytesUtil.longToBytes(targetFile.length()), 0, Long.BYTES);
+				extraTransferBytes += name.getBytes().length;
+				os.write(BytesUtil.longToBytes(targetFile.length()));
+				extraTransferBytes += Long.BYTES;
 				// now, we open the file and start sending it
 				fis = new FileInputStream(fileName);
 				// just send in little pieces...
-				int remaining = (int)targetFile.length();
-				int dataSize =  bufferSize - Long.BYTES;
+				long remaining = (int)targetFile.length();
 				byte[] buffer = new byte[bufferSize];
 				double bytesSent = 0;
 				double startTime = System.currentTimeMillis();
 				while(remaining > 0) {
 					// get from file...
-					int read = fis.read(buffer, Long.BYTES, remaining > dataSize? dataSize : remaining);
+					int read = 0;
+					if(remaining > bufferSize - Long.BYTES) {
+						read = fis.read(buffer, Long.BYTES, bufferSize - Long.BYTES);
+					}
+					else {
+						read = fis.read(buffer, Long.BYTES, fis.available());
+					}
 					// add the size...
 					System.arraycopy(BytesUtil.longToBytes(read), 0, buffer, 0, Long.BYTES);
 					// now send...
-					os.write(buffer, 0, read);
+					os.write(buffer, 0, read + Long.BYTES);
 					// done...
-					bytesSent += read + Long.BYTES;
+					bytesSent += read;
 					remaining -= read;
+					extraTransferBytes += Long.BYTES;
+					logger.debug("sent {}, {} bytes remaining...", read, remaining);
+				}		
+				// flush...
+				os.flush();
+				// receive ack
+				byte[] ack = new byte[Long.BYTES];
+				is.read(ack, 0, Long.BYTES);
+				extraTransferBytes += Long.BYTES;
+				long ok = BytesUtil.bytesToLong(ack);
+				logger.debug("Received ack={}", ok);
+				if(ok > 0) {
+					stats.getStats().add(new TransferStatValue(
+							TransferStatValue.Type.TransferBytes, bytesSent, TransferStatValue.Unit.Bytes));
+					stats.getStats().add(new TransferStatValue(
+							TransferStatValue.Type.ExtraTransferBytes, extraTransferBytes, TransferStatValue.Unit.Bytes));
+					stats.getStats().add(new TransferStatValue(
+							TransferStatValue.Type.TransferTime, System.currentTimeMillis() - startTime, TransferStatValue.Unit.Milliseconds));
+					logger.debug("Done with {}", fileName);
+					return stats;
 				}
-				stats.getStats().add(new TransferStatValue(
-						TransferStatValue.Type.TransferBytes, bytesSent, TransferStatValue.Unit.Bytes));
-				stats.getStats().add(new TransferStatValue(
-						TransferStatValue.Type.TransferTime, System.currentTimeMillis() - startTime, TransferStatValue.Unit.Milliseconds));
-				return stats;
+				else {
+					throw new IOException("Transfer failed!");
+				}
 			}
-			
 			finally {
 				if(fis != null) {
 					fis.close();
