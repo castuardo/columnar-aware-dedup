@@ -29,3 +29,28 @@ file/dir is /tmp/client (this can be set as ither an individual file or a direct
 6. Run runTestPlain.sh.
 
 Check the logs (client.log and server.log). All the transferred files will be logged including transferred bytes and transfer time.
+
+## Naive ORC client-server
+
+This test uses a naive chubking algorithm for ORC files, this is, is interested in trying to deduplicate the whole data section of each 
+stripe in the file. 
+
+1. Build
+2. Go to target/ColumnarAwareDedup/orc/naive/scripts
+3. Check server (createServer.sh) script: The default values for the properties will listen at port 2000 of 127.0.0.1 and output 
+files to /tmp/server.
+4. Check client (createClient.sh) script: The default values for the properties will connect to port 2000 of 127.0.0.1. The default input 
+file/dir is /tmp/client (this can be set as ither an individual file or a directory). The test also filters to only handle orc files.
+5. For client, you can create /tmp/client folders and add some orc files to transfer them. The basic way to test this is to copy the same
+orc file twice so you can see how the whole data section is deduplicated/
+6. Run runNaiveTestORC.sh.
+
+Check the logs (client.log and server.log). You should see in client.log something like:
+
+
+file=/tmp/client/o1.orc, stats=[ExtraTransferBytes=98.0 Bytes (5), TransferBytes=1908.0 Bytes (4)]
+...
+file=/tmp/client/copy-of-o1.orc, stats=[ExtraTransferBytes=91.0 Bytes (5), DedupBytes=1604.0 Bytes (1), TransferBytes=304.0 Byt
+es (4)]
+
+Meaning that the size of the data was 1604 bytes and the total bytes transfered through the network was 304 with 91 bytes of overhead.
