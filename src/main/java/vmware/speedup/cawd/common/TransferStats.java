@@ -2,6 +2,7 @@ package vmware.speedup.cawd.common;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +35,17 @@ public class TransferStats {
 		stats.addAll(other.getStats());
 	}
 	
+	public static TransferStats globalStats(List<TransferStats> all) {
+		TransferStats aggregated = new TransferStats("general");
+		for(TransferStats stats : all) {
+			TransferStats aggPerFile = aggregate(stats);
+			aggregated.appendStats(aggPerFile);
+		}
+		return aggregate(aggregated);
+		
+		
+	}
+	
 	public static TransferStats aggregate(TransferStats other) {
 		TransferStats aggregated = new TransferStats(other.filePath);
 		Map<TransferStatValue.Type, TransferStatValue> tmp = new HashMap<TransferStatValue.Type, TransferStatValue>();
@@ -42,13 +54,18 @@ public class TransferStats {
 				TransferStatValue current = tmp.get(value.type);
 				current.value += value.value;
 				current.ocurrences += 1;
+				current.addValue(value.value);
 			}
 			else {
 				tmp.put(value.type, value);
+				value.addValue(value.value);
 			}
 		}
 		// now add 
 		for(TransferStatValue vv : tmp.values()) {
+			if(vv.values.size() > 1) {
+				Collections.sort(vv.values);
+			}
 			aggregated.getStats().add(vv);
 		}
 		return aggregated;
@@ -70,7 +87,8 @@ public class TransferStats {
 			TransferBytes,
 			TransferTime,
 			ExtraTransferBytes,
-			DedupBytes
+			DedupBytes,
+			ParsingOverhead
 		}
 		
 		public enum Unit {
@@ -79,6 +97,7 @@ public class TransferStats {
 		};
 		
 		private int ocurrences = 0;
+		private List<Double> values = new ArrayList<Double>();
 		private Type type = null;
 		private double value = 0.0;
 		private Unit unit = null;
@@ -90,17 +109,34 @@ public class TransferStats {
 			this.ocurrences = 1;
 		}
 		
+		public double percentile(double percentile) {
+		    int index = (int) Math.ceil(percentile / 100.0 * values.size());
+		    return values.get(index-1);
+		}
+		
+		public void addValue(double value) {
+			this.values.add(value);
+		}
+		
 		@Override
 		public String toString() {
-			return new StringBuilder().append(type.name())
+			StringBuilder bld =  new StringBuilder().append(type.name())
 					.append("=")
 					.append(value)
 					.append(" ")
 					.append(unit.name())
 					.append(" (")
 					.append(ocurrences)
-					.append(")")
-					.toString();
+					.append(")");
+			if(ocurrences > 1 && values.size() > 1) {
+				double min = values.get(0);
+				double p25 = percentile(25);
+				double p50 = percentile(25);
+				double p75 = percentile(25);
+				double max = values.get(values.size() - 1);
+				bld.append(String.format(" (min, p25, p50, p75, max) = (%.3f,%.3f,%.3f,%.3f,%.3f)", min, p25, p50, p75, max));
+			}
+			return bld.toString();
 		}
 	}
 	

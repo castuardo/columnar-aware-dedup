@@ -32,8 +32,8 @@ Check the logs (client.log and server.log). All the transferred files will be lo
 
 ## Naive ORC client-server
 
-This test uses a naive chubking algorithm for ORC files, this is, is interested in trying to deduplicate the whole data section of each 
-stripe in the file. 
+This test uses a naive chubking algorithm for ORC files, this is, is interested in trying to deduplicate the whole data and footer section of each 
+stripe in the file. As expected, this works fine in databases where, for example, two query results look very similar, or other cases.
 
 1. Build
 2. Go to target/ColumnarAwareDedup/orc/naive/scripts
@@ -42,7 +42,7 @@ files to /tmp/server.
 4. Check client (createClient.sh) script: The default values for the properties will connect to port 2000 of 127.0.0.1. The default input 
 file/dir is /tmp/client (this can be set as ither an individual file or a directory). The test also filters to only handle orc files.
 5. For client, you can create /tmp/client folders and add some orc files to transfer them. The basic way to test this is to copy the same
-orc file twice so you can see how the whole data section is deduplicated/
+orc file twice so you can see how the whole data section is deduplicated.
 6. Run runNaiveTestORC.sh.
 
 Check the logs (client.log and server.log). You should see in client.log something like:

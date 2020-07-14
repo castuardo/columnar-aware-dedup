@@ -61,10 +61,19 @@ public class NaiveORCChunkingAlgorithm extends ChunkingAlgorithm<NaiveORCChunkin
 		
 		public static ChunkType fromOrdinal(int ordinal) {
 			switch(ordinal) {
-				case 0: return  ChunkType.Data;
-				case 1: return  ChunkType.Regular;
-				case 2: return  ChunkType.Footer;
+				case 1: return  ChunkType.Data;
+				case 2: return  ChunkType.Regular;
+				case 3: return  ChunkType.Footer;
 				default: return ChunkType.ERROR;
+			}
+		}
+		
+		public static int toOrdinal(ChunkType type) {
+			switch(type) {
+				case Data: return 1;
+				case Regular: return  2;
+				case Footer: return 3;
+				default: return -1000;
 			}
 		}
 		

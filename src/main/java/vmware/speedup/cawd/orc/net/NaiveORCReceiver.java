@@ -68,6 +68,7 @@ public class NaiveORCReceiver extends SpeedupReceiver {
 		if(chunk != null) {
 			// ack and acknowledge we handled it...
 			ackDataStream(1, os);
+			logger.debug("Sending ack...");
 			// and lets write it...
 			fos.write(chunk.getContent());
 			totalBytesReceived += chunk.getContent().length;
@@ -77,6 +78,7 @@ public class NaiveORCReceiver extends SpeedupReceiver {
 		// nope, we dont, we need to send a request back
 		else {
 			ackDataStream(-1, os);
+			logger.debug("Fallback, send content...");
 			// and get the content, this is an int and the content
 			is.read(sizeBuff, 0, Integer.BYTES);
 			int size = BytesUtil.bytesToInt(sizeBuff);
@@ -116,6 +118,7 @@ public class NaiveORCReceiver extends SpeedupReceiver {
 			// initiate transfer here
 			TransferMeta meta = initiateDataStreaming(is);
 			if(meta != null) {
+				logger.debug("Receiving {} of size {}", meta.getName(), meta.getSize());
 				totalBytesReceived = 0;
 				String fileName = destinationFolder + File.separator + meta.getName();
 				fos = new FileOutputStream(fileName);
@@ -127,6 +130,10 @@ public class NaiveORCReceiver extends SpeedupReceiver {
 					ChunkType nextChunkType = readNextType(is);
 					switch(nextChunkType) {
 						case Data: 
+							logger.debug("Receiving special chunk...");
+							stats = handleSpecialChunk(fileName, is, os, fos);
+							break;
+						case Footer: 
 							logger.debug("Receiving special chunk...");
 							stats = handleSpecialChunk(fileName, is, os, fos);
 							break;

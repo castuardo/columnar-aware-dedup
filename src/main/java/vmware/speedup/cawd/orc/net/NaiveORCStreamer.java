@@ -32,7 +32,7 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 		// get from the file...
 		int read = fis.read(buffer, Integer.BYTES + Long.BYTES, (int)regular.getSize());
 		// copy the type into 
-		System.arraycopy(BytesUtil.intToBytes(regular.getType().ordinal()), 0, buffer, 0, Integer.BYTES);
+		System.arraycopy(BytesUtil.intToBytes(ORCFileChunk.toOrdinal(regular.getType())), 0, buffer, 0, Integer.BYTES);
 		// copy size into send buffer
 		System.arraycopy(BytesUtil.longToBytes(read), 0, buffer, Integer.BYTES, Long.BYTES);
 		// and send
@@ -63,7 +63,7 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 			byte[] signature = algorithm.naiveSHA1(content);
 			// and we need to send it
 			byte[] buffer = new byte[Integer.BYTES + Integer.BYTES + signature.length];
-			System.arraycopy(BytesUtil.intToBytes(special.getType().ordinal()), 0, buffer, 0, Integer.BYTES);
+			System.arraycopy(BytesUtil.intToBytes(ORCFileChunk.toOrdinal(special.getType())), 0, buffer, 0, Integer.BYTES);
 			System.arraycopy(BytesUtil.intToBytes(signature.length), 0, buffer, Integer.BYTES, Integer.BYTES);
 			System.arraycopy(signature, 0, buffer, Integer.BYTES + Integer.BYTES, signature.length);
 			// and send it...
@@ -74,7 +74,8 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 			byte[] reply = new byte[Integer.BYTES];
 			is.read(reply, 0, Integer.BYTES);
 			int ack = BytesUtil.bytesToInt(reply);
-			if(ack <= 0) {
+			logger.debug("Received {} as ack", ack);
+			if(ack < 0) {
 				// dont have it, i have to send it again...
 				byte[] contentMessage = new byte[(int)special.getSize() + Integer.BYTES];
 				System.arraycopy(BytesUtil.intToBytes(content.length), 0, contentMessage, 0, Integer.BYTES);
@@ -109,7 +110,11 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 			logger.info("Starting file transfer for {}", fileName);
 			TransferStats nn = initiateTransfer(fileName, os);
 			stats.appendStats(nn);
+			long startTime = System.currentTimeMillis();
 			List<ORCFileChunk> chunks = algorithm.eagerChunking(fileName);
+			long orcParsingOverhead = System.currentTimeMillis() - startTime;
+			stats.getStats().add(new TransferStatValue(
+					TransferStatValue.Type.ParsingOverhead, orcParsingOverhead , TransferStatValue.Unit.Milliseconds));
 			logger.debug("{}", Arrays.toString(chunks.toArray()));
 			// now do the hustle...
 			for(ORCFileChunk chunk : chunks) {
@@ -119,19 +124,27 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 						logger.debug("Sending special chunk");
 						partial = handleSpecialChunk(fileName, chunk, is, os, fis);
 						break;
+					case Footer:
+						logger.debug("Sending special chunk");
+						partial = handleSpecialChunk(fileName, chunk, is, os, fis);
+						break;
 					default:
 						logger.debug("Sending regular chunk");
 						partial = handleRegularChunk(fileName, chunk, os, fis);
 				}
-				// check if we have some ack here
-				TransferStatus status = checkForAck(is);
-				logger.debug("TransferStatus={}", status.name());
-				if(status == TransferStatus.ERROR) {
-					logger.error("Received error signal from server...");
-					throw new IOException("Transfer failed with error from server!");
-				}
 				// append transfer stats
 				stats.appendStats(partial);
+			}
+			// check if we have some ack here
+			TransferStatus status = waitForAck(is);
+			logger.debug("TransferStatus={}", status.name());
+			if(status == TransferStatus.ERROR) {
+				logger.error("Received error signal from server...");
+				throw new IOException("Transfer failed with error from server!");
+			}
+			else if(status == TransferStatus.SUCCESS) {
+				stats.getStats().add(new TransferStatValue(
+						TransferStatValue.Type.TransferTime, System.currentTimeMillis() - startTime , TransferStatValue.Unit.Milliseconds));
 			}
 			// return aggregated stats...
 			return TransferStats.aggregate(stats);	

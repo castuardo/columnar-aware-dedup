@@ -10,6 +10,9 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import vmware.speedup.cawd.common.BytesUtil;
@@ -49,6 +52,7 @@ public class SpeedupServer extends Thread {
 		// so here we create a server socket and we just bind it
 		ServerSocket serverSocket = null;
 		Socket connection = null;
+		List<TransferStats> allStats = new ArrayList<TransferStats>();
 		try {
 			serverSocket = new ServerSocket(port, 0, InetAddress.getByName(host));
 			connection = serverSocket.accept();
@@ -58,11 +62,13 @@ public class SpeedupServer extends Thread {
 			logger.debug("Accepted connection...");
 			InputStream is = new BufferedInputStream(connection.getInputStream());
 			OutputStream os = new BufferedOutputStream(connection.getOutputStream());
+			
 			while(true) {
 				try {
 					TransferStats stats = receiver.receiveFile(destinationFolder.getAbsolutePath(), is, os);
 					if(stats != null) {
 						logger.info("{}", stats);
+						allStats.add(stats);
 					}
 					else {
 						break;
@@ -78,6 +84,7 @@ public class SpeedupServer extends Thread {
 			logger.error("Exception thrown while accepting connection...", e);
 		}
 		finally {
+			logger.info("{}", TransferStats.globalStats(allStats));
 			try{
 				if(connection != null) connection.close();
 			}

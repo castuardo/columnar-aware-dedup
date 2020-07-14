@@ -40,14 +40,18 @@ public abstract class SpeedupStreamer {
 		
 	}
 	
-	protected TransferStatus checkForAck(InputStream is) throws IOException {
-		if(is.available() == Integer.BYTES) {
-			byte [] ack = new byte[Integer.BYTES];
-			is.read(ack, 0, Integer.BYTES);
-			int a = BytesUtil.bytesToInt(ack);
-			return a > 0? TransferStatus.SUCCESS : TransferStatus.ERROR;
+	protected TransferStatus waitForAck(InputStream is) throws IOException {
+		while(is.available() != Integer.BYTES) {	
+			// wait here
+			try {
+				Thread.sleep(1);
+			}
+			catch(Exception e) {}
 		}
-		return TransferStatus.ONGOING;
+		byte [] ack = new byte[Integer.BYTES];
+		is.read(ack, 0, Integer.BYTES);
+		int a = BytesUtil.bytesToInt(ack);
+		return a > 0? TransferStatus.SUCCESS : (a == 0? TransferStatus.ONGOING : TransferStatus.ERROR);
 	}
 	
 	public static class PlainSpeedupStreamer extends SpeedupStreamer {
