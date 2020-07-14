@@ -1,4 +1,4 @@
-package vmware.speedup.cawd.orc.net;
+package vmware.speedup.cawd.parquet.net;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,23 +15,23 @@ import vmware.speedup.cawd.common.BytesUtil;
 import vmware.speedup.cawd.common.TransferStats;
 import vmware.speedup.cawd.common.TransferStats.TransferStatValue;
 import vmware.speedup.cawd.net.SpeedupStreamer;
-import vmware.speedup.cawd.orc.dedup.NaiveORCChunkingAlgorithm;
-import vmware.speedup.cawd.orc.dedup.NaiveORCChunkingAlgorithm.ORCFileChunk;
+import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm;
+import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm.ParquetFileChunk;
 
-public class NaiveORCStreamer extends SpeedupStreamer {
+public class NaiveParquetStreamer extends SpeedupStreamer {
 
-	private static final Logger logger = LogManager.getLogger(NaiveORCStreamer.class);
+	private static final Logger logger = LogManager.getLogger(NaiveParquetStreamer.class);
 	
-	private NaiveORCChunkingAlgorithm algorithm = new NaiveORCChunkingAlgorithm();
+	private NaiveParquetChunkingAlgorithm algorithm = new NaiveParquetChunkingAlgorithm();
 	
 	// Regular chunk:
 	// <type-int><size-long><data>	
-	private TransferStats handleRegularChunk(String fileName, ORCFileChunk regular, OutputStream os, FileInputStream fis) throws IOException {
+	private TransferStats handleRegularChunk(String fileName, ParquetFileChunk regular, OutputStream os, FileInputStream fis) throws IOException {
 		TransferStats stats = new TransferStats(fileName);
 		// this is simple, here we just send both the size and the data in a single piece...
 		byte[] buffer = new byte[Integer.BYTES + Long.BYTES + (int)regular.getSize()];
 		// get from the file...
-		int read = fis.read(buffer, Integer.BYTES + Long.BYTES, (int)regular.getSize());
+        int read = fis.read(buffer, Integer.BYTES + Long.BYTES, (int)regular.getSize());
 		// copy the type into 
 		System.arraycopy(BytesUtil.intToBytes(regular.getType().ordinal()), 0, buffer, 0, Integer.BYTES);
 		// copy size into send buffer
@@ -51,7 +51,7 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 	// Special chunk reply:
 		// 0: dont have it
 		// 1: thanks!
-	private TransferStats handleSpecialChunk(String fileName, ORCFileChunk special, InputStream is, OutputStream os, FileInputStream fis) throws IOException {
+	private TransferStats handleSpecialChunk(String fileName, ParquetFileChunk special, InputStream is, OutputStream os, FileInputStream fis) throws IOException {
 		TransferStats stats = new TransferStats(fileName);
 		int sentBytes = 0;
 		int overheadBytes = 0;
@@ -59,7 +59,8 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 			// read the content first
 			byte[] content = new byte[(int)special.getSize()];
 			// read it from file
-			fis.read(content);
+            int readLen = fis.read(content);
+            logger.info(String.format("sent special size: %d", readLen));
 			// hash it...
 			byte[] signature = algorithm.naiveSHA1(content);
 			// and we need to send it
@@ -110,13 +111,14 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 			logger.info("Starting file transfer for {}", fileName);
 			TransferStats nn = initiateTransfer(fileName, os);
 			stats.appendStats(nn);
-			List<ORCFileChunk> chunks = algorithm.eagerChunking(fileName);
+			List<ParquetFileChunk> chunks = algorithm.eagerChunking(fileName);
 			logger.debug("{}", Arrays.toString(chunks.toArray()));
 			// now do the hustle...
-			for(ORCFileChunk chunk : chunks) {
+			for(ParquetFileChunk chunk : chunks) {
 				TransferStats partial = null;
 				switch(chunk.getType()) {
-					case Data:
+                    case DataPageV1:
+                    case DataPageV2:
 						logger.debug("Sending special chunk");
 						partial = handleSpecialChunk(fileName, chunk, is, os, fis);
 						break;

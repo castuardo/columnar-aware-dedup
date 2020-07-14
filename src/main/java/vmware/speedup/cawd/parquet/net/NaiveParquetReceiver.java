@@ -1,4 +1,4 @@
-package vmware.speedup.cawd.orc.net;
+package vmware.speedup.cawd.parquet.net;
 
 
 import java.io.File;
@@ -17,28 +17,28 @@ import vmware.speedup.cawd.common.BytesUtil;
 import vmware.speedup.cawd.common.TransferStats;
 import vmware.speedup.cawd.common.TransferStats.TransferStatValue;
 import vmware.speedup.cawd.net.SpeedupReceiver;
-import vmware.speedup.cawd.orc.dedup.NaiveORCChunkStore;
-import vmware.speedup.cawd.orc.dedup.NaiveORCChunkingAlgorithm;
-import vmware.speedup.cawd.orc.dedup.NaiveORCChunkingAlgorithm.ORCFileChunk;
-import vmware.speedup.cawd.orc.dedup.NaiveORCChunkingAlgorithm.ORCFileChunk.ChunkType;
+import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkStore;
+import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm;
+import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm.ParquetFileChunk;
+import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm.ParquetFileChunk.ChunkType;
 
-public class NaiveORCReceiver extends SpeedupReceiver {
+public class NaiveParquetReceiver extends SpeedupReceiver {
 
-	private static final Logger logger = LogManager.getLogger(NaiveORCReceiver.class);
+	private static final Logger logger = LogManager.getLogger(NaiveParquetReceiver.class);
 	
 	private long totalBytesReceived = 0;
-	private NaiveORCChunkStore chunkStore = new NaiveORCChunkStore();
-	private NaiveORCChunkingAlgorithm algorithm = new NaiveORCChunkingAlgorithm();
+	private NaiveParquetChunkStore chunkStore = new NaiveParquetChunkStore();
+	private NaiveParquetChunkingAlgorithm algorithm = new NaiveParquetChunkingAlgorithm();
 	
 	// here, a chunk looks like <size-long><data>
 	private TransferStats handleRegularChunk(String fileName, InputStream is, FileOutputStream fos) throws IOException {
 		TransferStats stats = new TransferStats(fileName);
 		byte [] sizeBuff = new byte[Long.BYTES];
-		// read
-		((DataInputStream)is).readFully(sizeBuff, 0, Long.BYTES);
+        // read
+        ((DataInputStream)is).readFully(sizeBuff, 0, Long.BYTES);
 		// convert
 		long size = BytesUtil.bytesToLong(sizeBuff);
-		// read data...
+        // read data...
 		byte [] dataBuff = new byte[(int)size];
 		((DataInputStream)is).readFully(dataBuff, 0, (int)size);
 		// and write
@@ -65,7 +65,7 @@ public class NaiveORCReceiver extends SpeedupReceiver {
 		stats.getStats().add(new TransferStatValue(
 				TransferStatValue.Type.TransferBytes, hashSize , TransferStatValue.Unit.Bytes));
 		// do we have it?
-		ORCFileChunk chunk = chunkStore.findChunkBySignature(hash);
+		ParquetFileChunk chunk = chunkStore.findChunkBySignature(hash);
 		if(chunk != null) {
 			// ack and acknowledge we handled it...
 			ackDataStream(1, os);
@@ -87,7 +87,7 @@ public class NaiveORCReceiver extends SpeedupReceiver {
 			fos.write(content);
 			// and save it...
 			try {
-				List<ORCFileChunk> chunks = chunkStore.addChunks(content, algorithm);
+				List<ParquetFileChunk> chunks = chunkStore.addChunks(content, algorithm);
 				logger.debug("Added {} chunks to chunk store", chunks.size());
 			}
 			catch(NoSuchAlgorithmException e) {
@@ -107,7 +107,7 @@ public class NaiveORCReceiver extends SpeedupReceiver {
 	private ChunkType readNextType(InputStream is) throws IOException {
 		byte[] nextTypeOrdinal = new byte[Integer.BYTES];
 		((DataInputStream)is).readFully(nextTypeOrdinal, 0, Integer.BYTES);
-		return ORCFileChunk.fromOrdinal(BytesUtil.bytesToInt(nextTypeOrdinal));
+		return ParquetFileChunk.fromOrdinal(BytesUtil.bytesToInt(nextTypeOrdinal));
 	}
 	
 	@Override
@@ -127,8 +127,9 @@ public class NaiveORCReceiver extends SpeedupReceiver {
 					TransferStats stats = null;
 					ChunkType nextChunkType = readNextType(is);
 					switch(nextChunkType) {
-						case Data: 
-							logger.debug("Receiving special chunk...");
+                        case DataPageV1:
+                        case DataPageV2:
+                            logger.debug("Receiving special chunk...");
 							stats = handleSpecialChunk(fileName, is, os, fos);
 							break;
 						default: 

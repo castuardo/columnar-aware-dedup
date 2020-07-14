@@ -3,8 +3,8 @@ package vmware.speedup.cawd.main;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import vmware.speedup.cawd.parquet.parser.ParquetParser;
-import vmware.speedup.cawd.parquet.parser.ParquetParser.Chunk;
+import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm;
+import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm.ParquetFileChunk;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,46 +43,22 @@ public class TestMain {
 		logger.info("Works fine ({})!", new Date().toString());
         logger.info("Works fine ({})!", new Date().toString());
         String testParquetFile = "/home/administrator/spark-tpc-ds-performance-test/src/mixdata/parquet/catalog_sales05g.snappy.parquet";
-        ParquetParser parquetparser = new ParquetParser(testParquetFile);
-        // try {
-        //     parquetparser.ShowParquetColumn(); 
-        // } catch (IOException e) {
-        //     logger.error("ParquetParser ShowParquetColumn error");
-        //     return;
-        // }
-
-        File f = new File(testParquetFile + ".parsed");
-    
         int total_chunk_size = 0;
         try {
+            List<ParquetFileChunk> chunks = new NaiveParquetChunkingAlgorithm().eagerChunking(testParquetFile);
+            File f = new File(testParquetFile + ".parsed");
             OutputStream fos = new FileOutputStream(f, false); // not appending
 
-            Chunk chunk = parquetparser.GetParquetHeader();
-            total_chunk_size += chunk.in.available();
-            copy(chunk.in, fos);
-            logger.info("total chunk size in bytes: " + Integer.toString(total_chunk_size));
-
-            List<Chunk> chunks = null;
-            while((chunks = parquetparser.GetNextRowGroupChunks()) != null){
-                for(Chunk pagechunk : chunks){
-                    total_chunk_size += pagechunk.in.available();
-                    copy(pagechunk.in, fos);
-                    logger.info("total chunk size in bytes: " + Integer.toString(total_chunk_size));
-                }
+            for(ParquetFileChunk chunk : chunks){
+                total_chunk_size += chunk.getSize();
+                byte[] rawbytes = chunk.getContent();
+                fos.write(rawbytes);
+                logger.info("total chunk size in bytes: " + Integer.toString(total_chunk_size));
             }
-            chunk = parquetparser.GetParquetFooter();
-            total_chunk_size += parquetparser.GetParquetFooter().in.available();
-            copy(chunk.in, fos);
-            logger.info("total chunk size in bytes: " + Integer.toString(total_chunk_size));
-
-            chunk = parquetparser.GetAfterFooter();
-            total_chunk_size += parquetparser.GetAfterFooter().in.available();
-            copy(chunk.in, fos);
-            logger.info("total chunk size in bytes: " + Integer.toString(total_chunk_size));
 
             fos.close();
         } catch (IOException e) {
-            logger.error("ParquetParser Chunking error");
+            logger.error("NaiveParquetChunkingAlgorithm Chunking error");
         }
         logger.info("total chunk size: " + humanReadable(total_chunk_size));
 	}
