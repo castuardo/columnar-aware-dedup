@@ -116,20 +116,20 @@
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/client-default.xml</destinationFile>
 			                </fileSet>
 			                <fileSet>
-			                  <sourceFile>scripts/orc/environment.sh</sourceFile>
-			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/environment.sh</destinationFile>
+			                  <sourceFile>scripts/orc/naive/environment.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/naive/environment.sh</destinationFile>
 			                </fileSet>  
 			                <fileSet>
-			                  <sourceFile>scripts/orc/startServer.sh</sourceFile>
-			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/startServer.sh</destinationFile>
+			                  <sourceFile>scripts/orc/naive/startServer.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/naive/startServer.sh</destinationFile>
 			                </fileSet>  
 			                <fileSet>
-			                  <sourceFile>scripts/orc/startClient.sh</sourceFile>
-			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/startClient.sh</destinationFile>
+			                  <sourceFile>scripts/orc/naive/startClient.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/naive/startClient.sh</destinationFile>
 			                </fileSet>  
 			                <fileSet>
-			                  <sourceFile>scripts/orc/runTestORC.sh</sourceFile>
-			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/runTestORC.sh</destinationFile>
+			                  <sourceFile>scripts/orc/naive/runNaiveTestORC.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/naive/runNaiveTestORC.sh</destinationFile>
 			                </fileSet>        
               			</fileSets>
 	            	</configuration>
