@@ -9,7 +9,6 @@ import com.google.common.collect.Maps;
 
 import org.apache.parquet.cli.BaseCommand;
 import org.apache.avro.util.ByteBufferInputStream;
-import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.lang.StringUtils;
 import org.apache.parquet.column.ColumnDescriptor;
 import org.apache.parquet.column.page.DataPage;
