@@ -13,10 +13,42 @@ import vmware.speedup.cawd.common.TransferStats.TransferStatValue;
 import vmware.speedup.cawd.dedup.ColumnarChunkStore;
 
 public abstract class SpeedupStreamer {
-
-	protected ColumnarChunkStore chunkStore = null;
 	
 	public abstract TransferStats transferFile(String fileName, InputStream is, OutputStream os) throws IOException;
+	
+	public static enum TransferStatus {
+		ONGOING,
+		SUCCESS,
+		ERROR
+	}
+	
+	protected TransferStats initiateTransfer(String fileName, OutputStream os) throws IOException {
+		TransferStats stats = new TransferStats(fileName);
+		// compose...
+		File tmp = new File(fileName);
+		long fileLength = tmp.length();
+		int nameLength = tmp.getName().length();
+		byte [] buffer = new byte[Integer.BYTES + nameLength + Long.BYTES];
+		System.arraycopy(BytesUtil.intToBytes(nameLength), 0, buffer, 0, Integer.BYTES);
+		System.arraycopy(tmp.getName().getBytes(), 0, buffer, Integer.BYTES, tmp.getName().getBytes().length);
+		System.arraycopy(BytesUtil.longToBytes(fileLength), 0, buffer, Integer.BYTES + tmp.getName().getBytes().length, Long.BYTES);
+		// and send this
+		os.write(buffer);
+		os.flush();stats.getStats().add(new TransferStatValue(
+				TransferStatValue.Type.ExtraTransferBytes, Integer.BYTES + nameLength + Long.BYTES , TransferStatValue.Unit.Bytes));
+		return stats;
+		
+	}
+	
+	protected TransferStatus checkForAck(InputStream is) throws IOException {
+		if(is.available() == Integer.BYTES) {
+			byte [] ack = new byte[Integer.BYTES];
+			is.read(ack, 0, Integer.BYTES);
+			int a = BytesUtil.bytesToInt(ack);
+			return a > 0? TransferStatus.SUCCESS : TransferStatus.ERROR;
+		}
+		return TransferStatus.ONGOING;
+	}
 	
 	public static class PlainSpeedupStreamer extends SpeedupStreamer {
 		
