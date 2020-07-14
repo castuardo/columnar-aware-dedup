@@ -24,7 +24,7 @@ to compare with redundant traffic reduction techniques.
 3. Check server (createServer.sh) script: The default values for the properties will listen at port 2000 of 127.0.0.1 and output 
 files to /tmp/server.
 4. Check client (createClient.sh) script: The default values for the properties will connect to port 2000 of 127.0.0.1. The default input 
-file/dir is /tmp/client (this can be set as ither an individual file or a directory). The test also filters to only handle parquet files.
+file/dir is /tmp/client (this can be set as either an individual file or a directory). The test also filters to only handle parquet files.
 5. For client, you can create /tmp/client folders and add some parquet files to transfer them.
 6. Run runTestPlain.sh.
 

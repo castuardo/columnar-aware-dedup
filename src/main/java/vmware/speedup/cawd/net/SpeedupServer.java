@@ -1,6 +1,6 @@
 package vmware.speedup.cawd.net;
 
-import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -60,7 +60,7 @@ public class SpeedupServer extends Thread {
 			connection.setSoTimeout(0);
 			connection.setTcpNoDelay(true);
 			logger.debug("Accepted connection...");
-			InputStream is = new BufferedInputStream(connection.getInputStream());
+			InputStream is = new DataInputStream(connection.getInputStream());
 			OutputStream os = new BufferedOutputStream(connection.getOutputStream());
 			
 			while(true) {

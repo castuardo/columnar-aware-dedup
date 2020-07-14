@@ -1,6 +1,6 @@
 package vmware.speedup.cawd.net;
 
-import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -101,7 +101,7 @@ public class SpeedupClient extends Thread {
 			if(files != null && files.size() > 0) {
 				// try to open socket for sending first...
 				socket = connect();
-				InputStream is = new BufferedInputStream(socket.getInputStream());
+				InputStream is = new DataInputStream(socket.getInputStream());
 				OutputStream os = new BufferedOutputStream(socket.getOutputStream());
 				for(File file : files) {
 					if(isInFilter(file.getName())) {

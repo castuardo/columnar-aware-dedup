@@ -131,6 +131,31 @@
 			                  <sourceFile>scripts/orc/naive/runNaiveTestORC.sh</sourceFile>
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/naive/runNaiveTestORC.sh</destinationFile>
 			                </fileSet>        
+                            <!-- parquet test (parquet/runTestParquet.sh) -->  
+			                <fileSet>
+			                  <sourceFile>conf/server-default.xml</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/server-default.xml</destinationFile>
+			                </fileSet>
+			                <fileSet>
+			                  <sourceFile>conf/client-default.xml</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/client-default.xml</destinationFile>
+			                </fileSet>
+			                <fileSet>
+			                  <sourceFile>scripts/parquet/naive/environment.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/parquet/naive/environment.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/parquet/naive/startServer.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/parquet/naive/startServer.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/parquet/naive/startClient.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/parquet/naive/startClient.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/parquet/naive/runNaiveTestParquet.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/parquet/naive/runNaiveTestParquet.sh</destinationFile>
+			                </fileSet>        
               			</fileSets>
 	            	</configuration>
 	          	</execution>
@@ -161,6 +186,38 @@
     	<artifactId>log4j-core</artifactId>
     	<version>2.13.0</version>
   	</dependency>
+    <dependency>
+        <groupId>org.apache.parquet</groupId>
+        <artifactId>parquet-cli</artifactId>
+        <version>1.10.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.parquet</groupId>
+        <artifactId>parquet-column</artifactId>
+        <version>1.10.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.parquet</groupId>
+        <artifactId>parquet-common</artifactId>
+        <version>1.10.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-client</artifactId>
+        <version>2.7.3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.parquet</groupId>
+      <artifactId>parquet-format</artifactId>
+      <version>2.4.0</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>2.11.0</version>
+    </dependency>
+
   	<dependency>
     	<groupId>org.apache.orc</groupId>
     	<artifactId>orc-core</artifactId>
