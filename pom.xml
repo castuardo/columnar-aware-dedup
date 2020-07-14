@@ -105,6 +105,31 @@
 			                <fileSet>
 			                  <sourceFile>scripts/plain/runTestPlain.sh</sourceFile>
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/plain/runTestPlain.sh</destinationFile>
+			                </fileSet> 
+			                <!-- orc test (orc/runTestORC.sh) -->  
+			                <fileSet>
+			                  <sourceFile>conf/server-default.xml</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/server-default.xml</destinationFile>
+			                </fileSet>
+			                <fileSet>
+			                  <sourceFile>conf/client-default.xml</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/client-default.xml</destinationFile>
+			                </fileSet>
+			                <fileSet>
+			                  <sourceFile>scripts/orc/environment.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/environment.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/startServer.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/startServer.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/startClient.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/startClient.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/runTestORC.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/runTestORC.sh</destinationFile>
 			                </fileSet>        
               			</fileSets>
 	            	</configuration>
@@ -136,5 +161,15 @@
     	<artifactId>log4j-core</artifactId>
     	<version>2.13.0</version>
   	</dependency>
+  	<dependency>
+    	<groupId>org.apache.orc</groupId>
+    	<artifactId>orc-core</artifactId>
+    	<version>1.6.3</version>
+	</dependency>
+	<dependency>
+    	<groupId>org.apache.hadoop</groupId>
+    	<artifactId>hadoop-common</artifactId>
+    	<version>3.2.1</version>
+	</dependency>
   </dependencies>
 </project>
