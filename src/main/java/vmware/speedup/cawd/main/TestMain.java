@@ -42,7 +42,7 @@ public class TestMain {
 	public static void main(String... args) {
 		logger.info("Works fine ({})!", new Date().toString());
         logger.info("Works fine ({})!", new Date().toString());
-        String testParquetFile = "/home/administrator/spark-tpc-ds-performance-test/src/mixdata/parquet/catalog_sales01g.snappy.parquet";
+        String testParquetFile = "/home/administrator/spark-tpc-ds-performance-test/src/mixdata/parquet/catalog_sales05g.snappy.parquet";
         ParquetParser parquetparser = new ParquetParser(testParquetFile);
         // try {
         //     parquetparser.ShowParquetColumn(); 
@@ -61,6 +61,7 @@ public class TestMain {
             total_chunk_size += chunk.in.available();
             copy(chunk.in, fos);
             logger.info("total chunk size in bytes: " + Integer.toString(total_chunk_size));
+
             List<Chunk> chunks = null;
             while((chunks = parquetparser.GetNextRowGroupChunks()) != null){
                 for(Chunk pagechunk : chunks){

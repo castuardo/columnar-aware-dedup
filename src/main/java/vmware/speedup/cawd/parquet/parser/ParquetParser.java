@@ -116,7 +116,7 @@ public class ParquetParser {
 
     public Chunk GetParquetFooter() throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        org.apache.parquet.format.FileMetaData parquetMetadata = metadataConverter.toParquetMetadata(CURRENT_VERSION, this.footer);
+        org.apache.parquet.format.FileMetaData parquetMetadata = this.reader.getParquetFileMetaData();
         Util.writeFileMetaData(parquetMetadata, out);
         ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
         Chunk chunk = new Chunk(ChunkType.PAR_FOOTER, in);
