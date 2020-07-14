@@ -7,7 +7,7 @@ PROPS=""
 ## PROPS="-Dcawd.server.host=1270.0.1 $PROPS"
 ## PROPS="-Dcawd.server.port=2000 $PROPS"
 ## PROPS="-Dcawd.server.outputFolder=/tmp/server $PROPS"
-PROPS="-Dcawd.streamer.type=vmware.speedup.cawd.orc.net.ORCReceiver $PROPS"
+PROPS="-Dcawd.receiver.type=vmware.speedup.cawd.orc.net.NaiveORCReceiver $PROPS"
 ## log file...
 LOG_PROPS="-Dlog4j.configurationFile=$BASE_DIR/conf/server-default.xml"
 ## main class

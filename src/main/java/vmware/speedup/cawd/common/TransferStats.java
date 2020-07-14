@@ -47,6 +47,10 @@ public class TransferStats {
 				tmp.put(value.type, value);
 			}
 		}
+		// now add 
+		for(TransferStatValue vv : tmp.values()) {
+			aggregated.getStats().add(vv);
+		}
 		return aggregated;
 	}
 	

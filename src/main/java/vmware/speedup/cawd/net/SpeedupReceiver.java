@@ -18,6 +18,56 @@ public abstract class SpeedupReceiver {
 	
 	public abstract TransferStats receiveFile(String destinationFolder, InputStream is, OutputStream os) throws IOException;
 	
+	public static class TransferMeta {
+		
+		private String name = null;
+		private long size = 0;
+		private long totalLength = 0;
+		
+		public String getName() {
+			return name;
+		}
+		
+		public long getSize() {
+			return size;
+		}
+
+		public long getTotalLength() {
+			return totalLength;
+		}
+		
+	}
+	
+	// here, we read an int, a name (of int bytes) and a long
+	protected TransferMeta initiateDataStreaming(InputStream is) throws IOException {
+		TransferMeta meta = new TransferMeta();
+		// read the size
+		byte[] nameSize = new byte[Integer.BYTES];
+		is.read(nameSize, 0, Integer.BYTES);
+		int ns = BytesUtil.bytesToInt(nameSize);
+		if(ns > 0) {
+			// read the name
+			byte[] name = new byte[ns];
+			is.read(name, 0, ns);
+			meta.name = new String(name);
+			meta.totalLength += ns;
+			// and the size of the file
+			byte[] fileSize = new byte[Long.BYTES];
+			is.read(fileSize, 0, Long.BYTES);
+			meta.size = BytesUtil.bytesToLong(fileSize);
+			meta.totalLength += Long.BYTES;
+			return meta;
+		}
+		else {
+			return null;
+		}
+	}
+	
+	protected void ackDataStream(int ack, OutputStream os) throws IOException {
+		os.write(BytesUtil.intToBytes(ack));
+		os.flush();
+	}
+	
 	public static class PlainSpeedupReceiver extends SpeedupReceiver {
 
 		private static final Logger logger = LogManager.getLogger(SpeedupReceiver.class);

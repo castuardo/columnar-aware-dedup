@@ -74,7 +74,7 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 			byte[] reply = new byte[Integer.BYTES];
 			is.read(reply, 0, Integer.BYTES);
 			int ack = BytesUtil.bytesToInt(reply);
-			if(ack == 0) {
+			if(ack <= 0) {
 				// dont have it, i have to send it again...
 				byte[] contentMessage = new byte[(int)special.getSize() + Integer.BYTES];
 				System.arraycopy(BytesUtil.intToBytes(content.length), 0, contentMessage, 0, Integer.BYTES);
@@ -104,29 +104,40 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 	@Override
 	public TransferStats transferFile(String fileName, InputStream is, OutputStream os) throws IOException {
 		TransferStats stats = new TransferStats(fileName);
+		FileInputStream fis = new FileInputStream(fileName);
 		try {
+			logger.info("Starting file transfer for {}", fileName);
+			TransferStats nn = initiateTransfer(fileName, os);
+			stats.appendStats(nn);
 			List<ORCFileChunk> chunks = algorithm.eagerChunking(fileName);
 			logger.debug("{}", Arrays.toString(chunks.toArray()));
 			// now do the hustle...
-			FileInputStream fis = new FileInputStream(fileName);
 			for(ORCFileChunk chunk : chunks) {
 				TransferStats partial = null;
 				switch(chunk.getType()) {
 					case Data:
+						logger.debug("Sending special chunk");
 						partial = handleSpecialChunk(fileName, chunk, is, os, fis);
 						break;
 					default:
+						logger.debug("Sending regular chunk");
 						partial = handleRegularChunk(fileName, chunk, os, fis);
+				}
+				// check if we have some ack here
+				TransferStatus status = checkForAck(is);
+				logger.debug("TransferStatus={}", status.name());
+				if(status == TransferStatus.ERROR) {
+					logger.error("Received error signal from server...");
+					throw new IOException("Transfer failed with error from server!");
 				}
 				// append transfer stats
 				stats.appendStats(partial);
 			}
 			// return aggregated stats...
-			return TransferStats.aggregate(stats);
-			
+			return TransferStats.aggregate(stats);	
 		}
 		finally {
-			
+			if(fis != null) fis.close();
 		}
 	}
 	

@@ -28,7 +28,7 @@ public class NaiveORCChunkingAlgorithm extends ChunkingAlgorithm<NaiveORCChunkin
 				long dataStartIndex = stripe.getOffset() + stripe.getIndexLength();
 				long dataSize = stripe.getDataLength();
 				if(firstStripe) {
-					// this is the first none-special chunk...
+					// this is the first non-special chunk...
 					identifiedChunks.add(new ORCFileChunk(ORCFileChunk.ChunkType.Regular, 0, dataStartIndex));
 					firstStripe = false;
 				}
@@ -55,7 +55,17 @@ public class NaiveORCChunkingAlgorithm extends ChunkingAlgorithm<NaiveORCChunkin
 		public static enum ChunkType {
 			Data,
 			Regular,
-			Footer
+			Footer,
+			ERROR
+		}
+		
+		public static ChunkType fromOrdinal(int ordinal) {
+			switch(ordinal) {
+				case 0: return  ChunkType.Data;
+				case 1: return  ChunkType.Regular;
+				case 2: return  ChunkType.Footer;
+				default: return ChunkType.ERROR;
+			}
 		}
 		
 		private byte[] signature = null;
@@ -70,6 +80,15 @@ public class NaiveORCChunkingAlgorithm extends ChunkingAlgorithm<NaiveORCChunkin
 			this.type = type;
 			this.start = start;
 			this.size = size;
+		}
+		
+		public ORCFileChunk(byte[] signature) {
+			this.signature = signature;
+		}
+		
+		public ORCFileChunk(byte[] signature, byte[] content) {
+			this.signature = signature;
+			this.content = content;
 		}
 
 		public ChunkType getType() {
