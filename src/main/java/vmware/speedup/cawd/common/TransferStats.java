@@ -2,7 +2,14 @@ package vmware.speedup.cawd.common;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
+import com.fasterxml.jackson.annotation.JacksonInject.Value;
 
 
 public class TransferStats {
@@ -23,6 +30,26 @@ public class TransferStats {
 		return stats;
 	}
 	
+	public void appendStats(TransferStats other) {
+		stats.addAll(other.getStats());
+	}
+	
+	public static TransferStats aggregate(TransferStats other) {
+		TransferStats aggregated = new TransferStats(other.filePath);
+		Map<TransferStatValue.Type, TransferStatValue> tmp = new HashMap<TransferStatValue.Type, TransferStatValue>();
+		for(TransferStatValue value : other.getStats()) {
+			if(tmp.containsKey(value.type)) {
+				TransferStatValue current = tmp.get(value.type);
+				current.value += value.value;
+				current.ocurrences += 1;
+			}
+			else {
+				tmp.put(value.type, value);
+			}
+		}
+		return aggregated;
+	}
+	
 	@Override
 	public String toString() {
 		return new StringBuilder().append("file=") 
@@ -32,12 +59,14 @@ public class TransferStats {
 				.toString();
 	}
 	
+	
 	public static class TransferStatValue {
 		
 		public enum Type {
 			TransferBytes,
 			TransferTime,
-			ExtraTransferBytes
+			ExtraTransferBytes,
+			DedupBytes
 		}
 		
 		public enum Unit {
@@ -45,6 +74,7 @@ public class TransferStats {
 			Milliseconds
 		};
 		
+		private int ocurrences = 0;
 		private Type type = null;
 		private double value = 0.0;
 		private Unit unit = null;
@@ -53,6 +83,7 @@ public class TransferStats {
 			this.type = type;
 			this.value = value;
 			this.unit = unit;
+			this.ocurrences = 1;
 		}
 		
 		@Override
@@ -62,9 +93,11 @@ public class TransferStats {
 					.append(value)
 					.append(" ")
 					.append(unit.name())
+					.append(" (")
+					.append(ocurrences)
+					.append(")")
 					.toString();
 		}
-		
 	}
 	
 }
