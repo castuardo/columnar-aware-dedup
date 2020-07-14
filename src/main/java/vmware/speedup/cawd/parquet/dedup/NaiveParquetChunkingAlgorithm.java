@@ -146,18 +146,34 @@ public class NaiveParquetChunkingAlgorithm extends ChunkingAlgorithm<NaiveParque
 		
 		public static ChunkType fromOrdinal(int ordinal) {
 			switch(ordinal) {
-				case 0: return  ChunkType.ParquetHeader;
-				case 1: return  ChunkType.PageHeader;
-				case 2: return  ChunkType.DictPage;
-				case 3: return  ChunkType.DataPageV1;
-				case 4: return  ChunkType.DataPageV2;
-                case 5: return  ChunkType.ParquetFooter;
-				case 6: return  ChunkType.AfterFooter;
-				case 7: return  ChunkType.RepetitionValues;
-				case 8: return  ChunkType.DefinitionValues;
-                case 9: return  ChunkType.DataValues;
+				case 1: return  ChunkType.ParquetHeader;
+				case 2: return  ChunkType.PageHeader;
+				case 3: return  ChunkType.DictPage;
+				case 4: return  ChunkType.DataPageV1;
+				case 5: return  ChunkType.DataPageV2;
+                case 6: return  ChunkType.ParquetFooter;
+				case 7: return  ChunkType.AfterFooter;
+				case 8: return  ChunkType.RepetitionValues;
+				case 9: return  ChunkType.DefinitionValues;
+                case 10: return  ChunkType.DataValues;
                 default: return ChunkType.ERROR;
             }
+        }
+        
+        public static int toOrdinal(ChunkType type) {
+			switch(type) {
+				case ParquetHeader: return 1;
+				case PageHeader: return  2;
+                case DictPage: return 3;
+				case DataPageV1: return 4;
+				case DataPageV2: return  5;
+                case ParquetFooter: return 6;
+				case AfterFooter: return 7;
+				case RepetitionValues: return 8;
+				case DefinitionValues: return 9;
+				case DataValues: return 10;
+				default: return -1000;
+			}
 		}
 		
 		private byte[] signature = null;

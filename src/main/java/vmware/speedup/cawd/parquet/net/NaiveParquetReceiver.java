@@ -34,11 +34,11 @@ public class NaiveParquetReceiver extends SpeedupReceiver {
 	private TransferStats handleRegularChunk(String fileName, InputStream is, FileOutputStream fos) throws IOException {
 		TransferStats stats = new TransferStats(fileName);
 		byte [] sizeBuff = new byte[Long.BYTES];
-        // read
-        ((DataInputStream)is).readFully(sizeBuff, 0, Long.BYTES);
+		// read
+		((DataInputStream)is).readFully(sizeBuff, 0, Long.BYTES);
 		// convert
 		long size = BytesUtil.bytesToLong(sizeBuff);
-        // read data...
+		// read data...
 		byte [] dataBuff = new byte[(int)size];
 		((DataInputStream)is).readFully(dataBuff, 0, (int)size);
 		// and write
@@ -69,6 +69,7 @@ public class NaiveParquetReceiver extends SpeedupReceiver {
 		if(chunk != null) {
 			// ack and acknowledge we handled it...
 			ackDataStream(1, os);
+			logger.debug("Sending ack...");
 			// and lets write it...
 			fos.write(chunk.getContent());
 			totalBytesReceived += chunk.getContent().length;
@@ -78,6 +79,7 @@ public class NaiveParquetReceiver extends SpeedupReceiver {
 		// nope, we dont, we need to send a request back
 		else {
 			ackDataStream(-1, os);
+			logger.debug("Fallback, send content...");
 			// and get the content, this is an int and the content
 			((DataInputStream)is).readFully(sizeBuff, 0, Integer.BYTES);
 			int size = BytesUtil.bytesToInt(sizeBuff);
@@ -117,6 +119,7 @@ public class NaiveParquetReceiver extends SpeedupReceiver {
 			// initiate transfer here
 			TransferMeta meta = initiateDataStreaming(is);
 			if(meta != null) {
+				logger.debug("Receiving {} of size {}", meta.getName(), meta.getSize());
 				totalBytesReceived = 0;
 				String fileName = destinationFolder + File.separator + meta.getName();
 				fos = new FileOutputStream(fileName);
@@ -128,7 +131,7 @@ public class NaiveParquetReceiver extends SpeedupReceiver {
 					ChunkType nextChunkType = readNextType(is);
 					switch(nextChunkType) {
                         case DataPageV1:
-                        case DataPageV2:
+    					case DataPageV2:
                             logger.debug("Receiving special chunk...");
 							stats = handleSpecialChunk(fileName, is, os, fos);
 							break;

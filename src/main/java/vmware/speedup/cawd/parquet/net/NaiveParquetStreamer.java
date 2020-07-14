@@ -31,9 +31,9 @@ public class NaiveParquetStreamer extends SpeedupStreamer {
 		// this is simple, here we just send both the size and the data in a single piece...
 		byte[] buffer = new byte[Integer.BYTES + Long.BYTES + (int)regular.getSize()];
 		// get from the file...
-        int read = fis.read(buffer, Integer.BYTES + Long.BYTES, (int)regular.getSize());
+		int read = fis.read(buffer, Integer.BYTES + Long.BYTES, (int)regular.getSize());
 		// copy the type into 
-		System.arraycopy(BytesUtil.intToBytes(regular.getType().ordinal()), 0, buffer, 0, Integer.BYTES);
+		System.arraycopy(BytesUtil.intToBytes(ParquetFileChunk.toOrdinal(regular.getType())), 0, buffer, 0, Integer.BYTES);
 		// copy size into send buffer
 		System.arraycopy(BytesUtil.longToBytes(read), 0, buffer, Integer.BYTES, Long.BYTES);
 		// and send
@@ -59,13 +59,12 @@ public class NaiveParquetStreamer extends SpeedupStreamer {
 			// read the content first
 			byte[] content = new byte[(int)special.getSize()];
 			// read it from file
-            int readLen = fis.read(content);
-            logger.info(String.format("sent special size: %d", readLen));
+			fis.read(content);
 			// hash it...
 			byte[] signature = algorithm.naiveSHA1(content);
 			// and we need to send it
 			byte[] buffer = new byte[Integer.BYTES + Integer.BYTES + signature.length];
-			System.arraycopy(BytesUtil.intToBytes(special.getType().ordinal()), 0, buffer, 0, Integer.BYTES);
+			System.arraycopy(BytesUtil.intToBytes(ParquetFileChunk.toOrdinal(special.getType())), 0, buffer, 0, Integer.BYTES);
 			System.arraycopy(BytesUtil.intToBytes(signature.length), 0, buffer, Integer.BYTES, Integer.BYTES);
 			System.arraycopy(signature, 0, buffer, Integer.BYTES + Integer.BYTES, signature.length);
 			// and send it...
@@ -76,7 +75,8 @@ public class NaiveParquetStreamer extends SpeedupStreamer {
 			byte[] reply = new byte[Integer.BYTES];
 			((DataInputStream)is).readFully(reply, 0, Integer.BYTES);
 			int ack = BytesUtil.bytesToInt(reply);
-			if(ack <= 0) {
+			logger.debug("Received {} as ack", ack);
+			if(ack < 0) {
 				// dont have it, i have to send it again...
 				byte[] contentMessage = new byte[(int)special.getSize() + Integer.BYTES];
 				System.arraycopy(BytesUtil.intToBytes(content.length), 0, contentMessage, 0, Integer.BYTES);
@@ -111,30 +111,38 @@ public class NaiveParquetStreamer extends SpeedupStreamer {
 			logger.info("Starting file transfer for {}", fileName);
 			TransferStats nn = initiateTransfer(fileName, os);
 			stats.appendStats(nn);
+			long startTime = System.currentTimeMillis();
 			List<ParquetFileChunk> chunks = algorithm.eagerChunking(fileName);
+			long parquetParsingOverhead = System.currentTimeMillis() - startTime;
+			stats.getStats().add(new TransferStatValue(
+					TransferStatValue.Type.ParsingOverhead, parquetParsingOverhead , TransferStatValue.Unit.Milliseconds));
 			logger.debug("{}", Arrays.toString(chunks.toArray()));
 			// now do the hustle...
 			for(ParquetFileChunk chunk : chunks) {
 				TransferStats partial = null;
 				switch(chunk.getType()) {
-                    case DataPageV1:
-                    case DataPageV2:
-						logger.debug("Sending special chunk");
+					case DataPageV1:
+					case DataPageV2:
+                        logger.debug("Sending special chunk");
 						partial = handleSpecialChunk(fileName, chunk, is, os, fis);
 						break;
 					default:
 						logger.debug("Sending regular chunk");
 						partial = handleRegularChunk(fileName, chunk, os, fis);
 				}
-				// check if we have some ack here
-				TransferStatus status = checkForAck(is);
-				logger.debug("TransferStatus={}", status.name());
-				if(status == TransferStatus.ERROR) {
-					logger.error("Received error signal from server...");
-					throw new IOException("Transfer failed with error from server!");
-				}
 				// append transfer stats
 				stats.appendStats(partial);
+			}
+			// check if we have some ack here
+			TransferStatus status = waitForAck(is);
+			logger.debug("TransferStatus={}", status.name());
+			if(status == TransferStatus.ERROR) {
+				logger.error("Received error signal from server...");
+				throw new IOException("Transfer failed with error from server!");
+			}
+			else if(status == TransferStatus.SUCCESS) {
+				stats.getStats().add(new TransferStatValue(
+						TransferStatValue.Type.TransferTime, System.currentTimeMillis() - startTime , TransferStatValue.Unit.Milliseconds));
 			}
 			// return aggregated stats...
 			return TransferStats.aggregate(stats);	
