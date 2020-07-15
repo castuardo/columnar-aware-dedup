@@ -85,7 +85,7 @@ public class SpeedupClient extends Thread {
 		}
 		
 		List<TransferStats> allStats = new ArrayList<TransferStats>();
-		
+
 		try {
 			// now get the input files
 			List<File> files = null;

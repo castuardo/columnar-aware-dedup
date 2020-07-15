@@ -84,6 +84,7 @@ public class TransferStats {
 	public static class TransferStatValue {
 		
 		public enum Type {
+			FileBytes,
 			TransferBytes,
 			TransferTime,
 			ExtraTransferBytes,

@@ -61,7 +61,7 @@ public class NaiveParquetChunkingAlgorithm extends ChunkingAlgorithm<NaiveParque
             byte[] rawbytes;
 
             // the first chunk is the Magic chars
-            identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.ParquetHeader, curPos, MAGIC.length, MAGIC));
+            identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.ParquetHeader, curPos, MAGIC.length));
             curPos += MAGIC.length;
 
             // reading the whole next row group including multiple chunks and each chunk includes multiple pages (dict page or data page)
@@ -75,26 +75,26 @@ public class NaiveParquetChunkingAlgorithm extends ChunkingAlgorithm<NaiveParque
                         Util.writePageHeader(pageHeader, out);
                         rawbytes = out.toByteArray();
                         // page meta data chunk
-                        identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.PageHeader, curPos, rawbytes.length, rawbytes));
+                        identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.PageHeader, curPos, rawbytes.length));
                         curPos += rawbytes.length;
 
                         switch (pageHeader.type) {
                             case DICTIONARY_PAGE:
                                 rawbytes = pages.readRawDictionaryPage().getBytes().toByteArray();
                                 // dict page
-                                identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.DictPage, curPos, rawbytes.length, rawbytes));
+                                identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.DictPage, curPos, rawbytes.length));
                                 curPos += rawbytes.length;
                                 break;
                             case DATA_PAGE:
                                 rawbytes = ((DataPageV1) pages.readRawPage()).getBytes().toByteArray();
                                 // data page v1
-                                identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.DataPageV1, curPos, rawbytes.length, rawbytes));
+                                identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.DataPageV1, curPos, rawbytes.length));
                                 curPos += rawbytes.length;
                                 break;
                             case DATA_PAGE_V2:
                                 rawbytes = ((DataPageV2) pages.readRawPage()).getData().toByteArray();
                                 // data page v2
-                                identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.DataPageV2, curPos, rawbytes.length, rawbytes));
+                                identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.DataPageV2, curPos, rawbytes.length));
                                 curPos += rawbytes.length;
                                 break;
                             default:
@@ -110,7 +110,7 @@ public class NaiveParquetChunkingAlgorithm extends ChunkingAlgorithm<NaiveParque
             Util.writeFileMetaData(parquetMetadata, out);
             rawbytes = out.toByteArray();
             // after all row group, we have parquet footer (parquet file meta data); 
-            identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.ParquetFooter, curPos, rawbytes.length, rawbytes));
+            identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.ParquetFooter, curPos, rawbytes.length));
             curPos += rawbytes.length;
 
             out = new ByteArrayOutputStream();
@@ -118,7 +118,7 @@ public class NaiveParquetChunkingAlgorithm extends ChunkingAlgorithm<NaiveParque
             out.write(MAGIC);
             rawbytes = out.toByteArray();
             // after footer, there are eight bytes. 
-            identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.AfterFooter, curPos, rawbytes.length, rawbytes));
+            identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.AfterFooter, curPos, rawbytes.length));
             curPos += rawbytes.length;
             
             return identifiedChunks;
@@ -182,7 +182,15 @@ public class NaiveParquetChunkingAlgorithm extends ChunkingAlgorithm<NaiveParque
 		private long start = 0;
 		private long size = 0;
 		
-		public ParquetFileChunk(ChunkType type, long start, long size, byte[] content) {
+        public ParquetFileChunk(ChunkType type, long start, long size) {
+			this.signature = null;
+			this.content = null;
+			this.type = type;
+			this.start = start;
+			this.size = size;
+        }
+        
+        public ParquetFileChunk(ChunkType type, long start, long size, byte[] content) {
 			this.signature = null;
 			this.content = content;
 			this.type = type;
