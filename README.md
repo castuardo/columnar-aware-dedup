@@ -2,6 +2,28 @@
 
 Run mvn package. The output will be created at target/ColumnarAwareDedup. This includes jars, deps and scripts.
 
+## Building customized parquet-mr
+
+The original [parquet-mr](https://github.com/apache/parquet-mr/tree/apache-parquet-1.10.0) reads, decodes, and uncompresses data mixedly, and makes it hard to directly use their API to separate metadata and data. I finally decide to change their code to expose usefull information outside. The customized one is [here](https://github.com/YangZhou1997/parquet-mr/tree/speedup). 
+
+To install it in your local respository, 
+```bash
+# clone customized parquet-mr
+git clone git@github.com:YangZhou1997/parquet-mr.git 
+cd parquet-mr && git checkout speedup
+
+# install customized version to the local repository
+mvn clean install -Drat.numUnapprovedLicenses=200 -DskipTests -pl parquet-column,parquet-hadoop,parquet-cli,parquet-common
+
+# in columnar-aware-dedup rep
+mvn clean package
+
+# if the above command shows unknown symbols, you run following to force using only local rep during building. 
+mvn clean package -o
+```
+
+Tested on Ubuntu 16.04.3 LTS (GNU/Linux 4.4.0-184-generic x86_64) with Apache Maven 3.3.9. 
+
 # Testing
 
 ## Basic test
