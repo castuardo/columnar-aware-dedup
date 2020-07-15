@@ -13,4 +13,4 @@ LOG_PROPS="-Dlog4j.configurationFile=$BASE_DIR/conf/server-default.xml"
 ## main class
 MAIN="vmware.speedup.cawd.main.ParquetServerMain"
 ## now start the server...
-java -cp $MAIN_JAR:$CLASS_PATH $PROPS $LOG_PROPS $MAIN
+java $JVM_ARGS -cp $MAIN_JAR:$CLASS_PATH $PROPS $LOG_PROPS $MAIN

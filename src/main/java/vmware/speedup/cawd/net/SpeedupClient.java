@@ -84,6 +84,7 @@ public class SpeedupClient extends Thread {
 			return;
 		}
 		
+		List<TransferStats> allStats = new ArrayList<TransferStats>();
 		try {
 			// now get the input files
 			List<File> files = null;
@@ -109,6 +110,7 @@ public class SpeedupClient extends Thread {
 						TransferStats stats = streamer.transferFile(file.getAbsolutePath(), is, os);
 						// log stats
 						logger.info("{}", stats);
+						allStats.add(stats);
 					}
 					else {
 						logger.warn("Ignoring {}, is not a parquet file...", file.getAbsolutePath());
@@ -131,6 +133,7 @@ public class SpeedupClient extends Thread {
 		}
 		
 		finally {
+			logger.info("{}", TransferStats.globalStats(allStats));
 			if(socket != null && !socket.isClosed()) {
 				try {
 					logger.debug("Closing socket...");

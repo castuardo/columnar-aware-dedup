@@ -108,7 +108,10 @@ public class NaiveParquetStreamer extends SpeedupStreamer {
 		TransferStats stats = new TransferStats(fileName);
 		FileInputStream fis = new FileInputStream(fileName);
 		try {
-			logger.info("Starting file transfer for {}", fileName);
+            stats.getStats().add(new TransferStatValue(
+					TransferStatValue.Type.FileBytes, fis.available(), TransferStatValue.Unit.Bytes));
+			
+            logger.info("Starting file transfer for {}", fileName);
 			TransferStats nn = initiateTransfer(fileName, os);
 			stats.appendStats(nn);
 			long startTime = System.currentTimeMillis();
@@ -129,7 +132,7 @@ public class NaiveParquetStreamer extends SpeedupStreamer {
 					default:
 						logger.debug("Sending regular chunk");
 						partial = handleRegularChunk(fileName, chunk, os, fis);
-				}
+                }
 				// append transfer stats
 				stats.appendStats(partial);
 			}
