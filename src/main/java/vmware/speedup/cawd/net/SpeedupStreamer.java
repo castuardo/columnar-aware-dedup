@@ -41,13 +41,6 @@ public abstract class SpeedupStreamer {
 	}
 	
 	protected TransferStatus waitForAck(InputStream is) throws IOException {
-		while(is.available() != Integer.BYTES) {	
-			// wait here
-			try {
-				Thread.sleep(1);
-			}
-			catch(Exception e) {}
-		}
 		byte [] ack = new byte[Integer.BYTES];
 		is.read(ack, 0, Integer.BYTES);
 		int a = BytesUtil.bytesToInt(ack);
