@@ -80,11 +80,20 @@
 	            	</goals>
 	            	<configuration>
 	            		<fileSets>
-			                <!-- simple test (testmain/runTestMain.sh) -->
-			                <fileSet>
+	            			<!-- log files -->
+	            			<fileSet>
 			                  <sourceFile>conf/log4j-default.xml</sourceFile>
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/log4j-default.xml</destinationFile>
 			                </fileSet>
+			                <fileSet>
+			                  <sourceFile>conf/server-default.xml</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/server-default.xml</destinationFile>
+			                </fileSet>
+			                <fileSet>
+			                  <sourceFile>conf/client-default.xml</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/client-default.xml</destinationFile>
+			                </fileSet>
+			                <!-- simple test (testmain/runTestMain.sh) -->
 			                <fileSet>
 			                  <sourceFile>scripts/testmain/environment.sh</sourceFile>
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/testmain/environment.sh</destinationFile>
@@ -94,14 +103,6 @@
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/testmain/runTestMain.sh</destinationFile>
 			                </fileSet>   
 			                <!-- plain test (plain/runTestPlain.sh) -->  
-			                <fileSet>
-			                  <sourceFile>conf/server-default.xml</sourceFile>
-			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/server-default.xml</destinationFile>
-			                </fileSet>
-			                <fileSet>
-			                  <sourceFile>conf/client-default.xml</sourceFile>
-			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/client-default.xml</destinationFile>
-			                </fileSet>
 			                <fileSet>
 			                  <sourceFile>scripts/plain/environment.sh</sourceFile>
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/plain/environment.sh</destinationFile>
@@ -118,15 +119,7 @@
 			                  <sourceFile>scripts/plain/runTestPlain.sh</sourceFile>
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/plain/runTestPlain.sh</destinationFile>
 			                </fileSet> 
-			                <!-- orc test (orc/runTestORC.sh) -->  
-			                <fileSet>
-			                  <sourceFile>conf/server-default.xml</sourceFile>
-			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/server-default.xml</destinationFile>
-			                </fileSet>
-			                <fileSet>
-			                  <sourceFile>conf/client-default.xml</sourceFile>
-			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/client-default.xml</destinationFile>
-			                </fileSet>
+			                <!-- orc test (orc/naive/runNaiveTestORC.sh) -->  
 			                <fileSet>
 			                  <sourceFile>scripts/orc/naive/environment.sh</sourceFile>
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/naive/environment.sh</destinationFile>
@@ -143,15 +136,24 @@
 			                  <sourceFile>scripts/orc/naive/runNaiveTestORC.sh</sourceFile>
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/naive/runNaiveTestORC.sh</destinationFile>
 			                </fileSet>        
+			                <!-- orc test (orc/column/runColumnTestORC.sh) -->  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/column/environment.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/column/environment.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/column/startServer.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/column/startServer.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/column/startClient.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/column/startClient.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/column/runColumnTestORC.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/column/runColumnTestORC.sh</destinationFile>
+			                </fileSet>        
                             <!-- parquet test (parquet/runTestParquet.sh) -->  
-			                <fileSet>
-			                  <sourceFile>conf/server-default.xml</sourceFile>
-			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/server-default.xml</destinationFile>
-			                </fileSet>
-			                <fileSet>
-			                  <sourceFile>conf/client-default.xml</sourceFile>
-			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/conf/client-default.xml</destinationFile>
-			                </fileSet>
 			                <fileSet>
 			                  <sourceFile>scripts/parquet/naive/environment.sh</sourceFile>
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/parquet/naive/environment.sh</destinationFile>
