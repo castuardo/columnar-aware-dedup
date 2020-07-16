@@ -108,6 +108,9 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 		TransferStats stats = new TransferStats(fileName);
 		FileInputStream fis = new FileInputStream(fileName);
 		try {
+            stats.getStats().add(new TransferStatValue(
+					TransferStatValue.Type.FileBytes, fis.available(), TransferStatValue.Unit.Bytes));
+			
 			logger.info("Starting file transfer for {}", fileName);
 			TransferStats nn = initiateTransfer(fileName, os);
 			stats.appendStats(nn);

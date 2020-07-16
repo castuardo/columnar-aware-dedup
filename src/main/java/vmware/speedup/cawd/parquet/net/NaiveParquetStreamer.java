@@ -125,7 +125,8 @@ public class NaiveParquetStreamer extends SpeedupStreamer {
 				TransferStats partial = null;
 				switch(chunk.getType()) {
 					case DataPageV1:
-					case DataPageV2:
+                    case DataPageV2:
+                    case ParquetFooter:
                         logger.debug("Sending special chunk");
 						partial = handleSpecialChunk(fileName, chunk, is, os, fis);
 						break;

@@ -4,9 +4,11 @@
 source environment.sh
 ## start the server
 echo "Starting server..."
+bash startServer.sh &
 sleep 5
-./startServer.sh
 echo "Starting client..."
-./startClient.sh
+bash startClient.sh &
 echo "Done, check results in output folder and logs..."
+# wait all bg processes
+wait
 ## done, now check results...

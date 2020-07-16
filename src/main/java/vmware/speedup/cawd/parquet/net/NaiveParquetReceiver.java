@@ -132,7 +132,8 @@ public class NaiveParquetReceiver extends SpeedupReceiver {
 					switch(nextChunkType) {
                         case DataPageV1:
     					case DataPageV2:
-                            logger.debug("Receiving special chunk...");
+                        case ParquetFooter:
+                        logger.debug("Receiving special chunk...");
 							stats = handleSpecialChunk(fileName, is, os, fos);
 							break;
 						default: 

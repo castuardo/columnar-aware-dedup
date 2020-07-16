@@ -5,9 +5,11 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.nio.charset.Charset;
+import java.nio.ByteBuffer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,23 +29,29 @@ import static org.apache.parquet.cli.Util.primitive;
 import static org.apache.parquet.bytes.BytesUtils.writeIntLittleEndian;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import com.eyalzo.common.chunks.ChunksFiles;
+import com.eyalzo.common.chunks.PackChunking;
 
 import vmware.speedup.cawd.dedup.ChunkingAlgorithm;
- 
+
 public class NaiveParquetChunkingAlgorithm extends ChunkingAlgorithm<NaiveParquetChunkingAlgorithm.ParquetFileChunk> {
     private static final Logger logger = LogManager.getLogger(NaiveParquetChunkingAlgorithm.class);
  
     public static final String MAGIC_STR = "PAR1";
     public static final byte[] MAGIC = MAGIC_STR.getBytes(Charset.forName("ASCII"));
     
+	private static final int FILE_BLOCK_SIZE = 1000000;
+
     @Override
 	public List<ParquetFileChunk> eagerChunking(String fileName) throws IOException {
         List<ParquetFileChunk> identifiedChunks = new ArrayList<ParquetFileChunk>();
 
         Configuration conf = new Configuration();
         ParquetFileReader parquetReader = ParquetFileReader.open(HadoopInputFile.fromPath(new Path(fileName), conf));
-        logger.info("Open parquet file: " + fileName);
+        logger.debug("Open parquet file: " + fileName);
 
+        ByteBuffer buffer = ByteBuffer.allocate(FILE_BLOCK_SIZE);
+		PackChunking pack = new PackChunking(6);
         try {
             // read footer, aka, parquet file meta data
             ParquetMetadata footer = parquetReader.getFooter();
@@ -78,6 +86,7 @@ public class NaiveParquetChunkingAlgorithm extends ChunkingAlgorithm<NaiveParque
                         identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.PageHeader, curPos, rawbytes.length));
                         curPos += rawbytes.length;
 
+                        LinkedList<Long> curChunkList = new LinkedList<Long>();
                         switch (pageHeader.type) {
                             case DICTIONARY_PAGE:
                                 rawbytes = pages.readRawDictionaryPage().getBytes().toByteArray();
@@ -87,12 +96,29 @@ public class NaiveParquetChunkingAlgorithm extends ChunkingAlgorithm<NaiveParque
                                 break;
                             case DATA_PAGE:
                                 rawbytes = ((DataPageV1) pages.readRawPage()).getBytes().toByteArray();
+                                pack.getChunksAll(curChunkList, rawbytes, 0, rawbytes.length);
+                                int rawLenCumu = 0;
+                                for (Long curChunk : curChunkList) {
+                                    int curChunkLen = PackChunking.chunkToLen(curChunk);
+                                    identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.DataPageV1, curPos, curChunkLen));
+                                    curPos += curChunkLen;
+                                    rawLenCumu += curChunkLen;
+                                }
+                                if(rawLenCumu != rawbytes.length){
+                                    logger.error("PackChunking chunks total size {}, should be {}", rawLenCumu, rawbytes.length);
+                                }
                                 // data page v1
-                                identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.DataPageV1, curPos, rawbytes.length));
-                                curPos += rawbytes.length;
+                                // identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.DataPageV1, curPos, rawbytes.length));
+                                // curPos += rawbytes.length;
                                 break;
                             case DATA_PAGE_V2:
                                 rawbytes = ((DataPageV2) pages.readRawPage()).getData().toByteArray();
+                                // pack.getChunksAll(curChunkList, rawbytes, 0, rawbytes.length);
+                                // for (Long curChunk : curChunkList) {
+                                //     int curChunkLen = PackChunking.chunkToLen(curChunk);
+                                //     identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.DataPageV2, curPos, curChunkLen));
+                                //     curPos += curChunkLen;
+                                // }
                                 // data page v2
                                 identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.DataPageV2, curPos, rawbytes.length));
                                 curPos += rawbytes.length;

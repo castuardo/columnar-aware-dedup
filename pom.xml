@@ -218,6 +218,12 @@
         <version>2.11.0</version>
     </dependency>
 
+    <dependency>
+        <groupId>com.eyalzo.filesimilarityanalysis</groupId>
+        <artifactId>filesimilarityanalysis</artifactId>
+        <version>1.0</version>
+    </dependency>
+
   	<dependency>
     	<groupId>org.apache.orc</groupId>
     	<artifactId>orc-core</artifactId>
