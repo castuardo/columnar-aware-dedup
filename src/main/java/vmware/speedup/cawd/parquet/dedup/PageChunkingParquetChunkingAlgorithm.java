@@ -29,11 +29,13 @@ import static org.apache.parquet.cli.Util.primitive;
 import static org.apache.parquet.bytes.BytesUtils.writeIntLittleEndian;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import com.eyalzo.common.chunks.ChunksFiles;
+import com.eyalzo.common.chunks.PackChunking;
 
 import vmware.speedup.cawd.dedup.ChunkingAlgorithm;
 
-public class NaiveParquetChunkingAlgorithm extends ChunkingAlgorithm<NaiveParquetChunkingAlgorithm.ParquetFileChunk> {
-    private static final Logger logger = LogManager.getLogger(NaiveParquetChunkingAlgorithm.class);
+public class PageChunkingParquetChunkingAlgorithm extends ChunkingAlgorithm<PageChunkingParquetChunkingAlgorithm.ParquetFileChunk> {
+    private static final Logger logger = LogManager.getLogger(PageChunkingParquetChunkingAlgorithm.class);
  
     public static final String MAGIC_STR = "PAR1";
     public static final byte[] MAGIC = MAGIC_STR.getBytes(Charset.forName("ASCII"));
@@ -48,6 +50,8 @@ public class NaiveParquetChunkingAlgorithm extends ChunkingAlgorithm<NaiveParque
         ParquetFileReader parquetReader = ParquetFileReader.open(HadoopInputFile.fromPath(new Path(fileName), conf));
         logger.debug("Open parquet file: " + fileName);
 
+        ByteBuffer buffer = ByteBuffer.allocate(FILE_BLOCK_SIZE);
+		PackChunking pack = new PackChunking(12);
         try {
             // read footer, aka, parquet file meta data
             ParquetMetadata footer = parquetReader.getFooter();
@@ -85,21 +89,15 @@ public class NaiveParquetChunkingAlgorithm extends ChunkingAlgorithm<NaiveParque
                         switch (pageHeader.type) {
                             case DICTIONARY_PAGE:
                                 rawbytes = pages.readRawDictionaryPage().getBytes().toByteArray();
-                                // dict page
-                                identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.DictPage, curPos, rawbytes.length));
-                                curPos += rawbytes.length;
+                                curPos = PackChunkingWrapper(pack, rawbytes, identifiedChunks, buffer, curPos, ParquetFileChunk.ChunkType.DictPage);
                                 break;
                             case DATA_PAGE:
                                 rawbytes = ((DataPageV1) pages.readRawPage()).getBytes().toByteArray();
-                                // data page v1
-                                identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.DataPageV1, curPos, rawbytes.length));
-                                curPos += rawbytes.length;
+                                curPos = PackChunkingWrapper(pack, rawbytes, identifiedChunks, buffer, curPos, ParquetFileChunk.ChunkType.DataPageV1);
                                 break;
                             case DATA_PAGE_V2:
                                 rawbytes = ((DataPageV2) pages.readRawPage()).getData().toByteArray();
-                                // data page v2
-                                identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.DataPageV2, curPos, rawbytes.length));
-                                curPos += rawbytes.length;
+                                curPos = PackChunkingWrapper(pack, rawbytes, identifiedChunks, buffer, curPos, ParquetFileChunk.ChunkType.DataPageV2);
                                 break;
                             default:
                                 logger.error("skipping page of type {} of size {}", pageHeader.getType(), pageHeader.compressed_page_size);
@@ -114,8 +112,8 @@ public class NaiveParquetChunkingAlgorithm extends ChunkingAlgorithm<NaiveParque
             Util.writeFileMetaData(parquetMetadata, out);
             rawbytes = out.toByteArray();
             // after all row group, we have parquet footer (parquet file meta data); 
-            identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.ParquetFooter, curPos, rawbytes.length));
-            curPos += rawbytes.length;
+            curPos = PackChunkingWrapper(pack, rawbytes, identifiedChunks, buffer, curPos, ParquetFileChunk.ChunkType.ParquetFooter);
+
 
             out = new ByteArrayOutputStream();
             writeIntLittleEndian(out, ParquetFileReader.MyFooterLength);
@@ -131,7 +129,24 @@ public class NaiveParquetChunkingAlgorithm extends ChunkingAlgorithm<NaiveParque
             if(parquetReader != null) parquetReader.close();
         }
     }
-	
+    
+    // return the updated curPos
+    public long PackChunkingWrapper(PackChunking pack, byte[] rawbytes, List<ParquetFileChunk> identifiedChunks, ByteBuffer buffer, long curPos, ParquetFileChunk.ChunkType chunkType){
+        int rawLenCumu = 0;
+        LinkedList<Long> curChunkList = new LinkedList<Long>();
+        pack.getChunksAll(curChunkList, rawbytes, 0, rawbytes.length);
+        for (Long curChunk : curChunkList) {
+            int curChunkLen = PackChunking.chunkToLen(curChunk);
+            identifiedChunks.add(new ParquetFileChunk(chunkType, curPos, curChunkLen));
+            curPos += curChunkLen;
+            rawLenCumu += curChunkLen;
+        }
+        if(rawLenCumu != rawbytes.length){
+            logger.error("PackChunking chunks total size {}, should be {}", rawLenCumu, rawbytes.length);
+        }
+        return curPos;
+    }
+
     public static class ParquetFileChunk extends ChunkingAlgorithm.Chunk {
 		
 		public static enum ChunkType {

@@ -17,18 +17,18 @@ import vmware.speedup.cawd.common.BytesUtil;
 import vmware.speedup.cawd.common.TransferStats;
 import vmware.speedup.cawd.common.TransferStats.TransferStatValue;
 import vmware.speedup.cawd.net.SpeedupReceiver;
-import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkStore;
-import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm;
-import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm.ParquetFileChunk;
-import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm.ParquetFileChunk.ChunkType;
+import vmware.speedup.cawd.parquet.dedup.FileChunkingParquetChunkStore;
+import vmware.speedup.cawd.parquet.dedup.FileChunkingParquetChunkingAlgorithm;
+import vmware.speedup.cawd.parquet.dedup.FileChunkingParquetChunkingAlgorithm.ParquetFileChunk;
+import vmware.speedup.cawd.parquet.dedup.FileChunkingParquetChunkingAlgorithm.ParquetFileChunk.ChunkType;
 
-public class NaiveParquetReceiver extends SpeedupReceiver {
+public class FileChunkingParquetReceiver extends SpeedupReceiver {
 
-	private static final Logger logger = LogManager.getLogger(NaiveParquetReceiver.class);
+	private static final Logger logger = LogManager.getLogger(FileChunkingParquetReceiver.class);
 	
 	private long totalBytesReceived = 0;
-	private NaiveParquetChunkStore chunkStore = new NaiveParquetChunkStore();
-	private NaiveParquetChunkingAlgorithm algorithm = new NaiveParquetChunkingAlgorithm();
+	private FileChunkingParquetChunkStore chunkStore = new FileChunkingParquetChunkStore();
+	private FileChunkingParquetChunkingAlgorithm algorithm = new FileChunkingParquetChunkingAlgorithm();
 	
 	// here, a chunk looks like <size-long><data>
 	private TransferStats handleRegularChunk(String fileName, InputStream is, FileOutputStream fos) throws IOException {
@@ -122,7 +122,9 @@ public class NaiveParquetReceiver extends SpeedupReceiver {
 				logger.debug("Receiving {} of size {}", meta.getName(), meta.getSize());
 				totalBytesReceived = 0;
 				String fileName = destinationFolder + File.separator + meta.getName();
-				fos = new FileOutputStream(fileName);
+                logger.warn(fileName);
+                
+                fos = new FileOutputStream(fileName);
 				TransferStats all = new TransferStats(fileName);
 				all.getStats().add(new TransferStatValue(
                         TransferStatValue.Type.ExtraTransferBytes, meta.getTotalLength() + Integer.BYTES , TransferStatValue.Unit.Bytes));

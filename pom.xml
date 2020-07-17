@@ -156,7 +156,42 @@
 			                  <sourceFile>scripts/parquet/naive/runNaiveTestParquet.sh</sourceFile>
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/parquet/naive/runNaiveTestParquet.sh</destinationFile>
 			                </fileSet>        
-              			</fileSets>
+                            
+                            
+			                <fileSet>
+			                  <sourceFile>scripts/parquet/pagechunking/environment.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/parquet/pagechunking/environment.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/parquet/pagechunking/startServer.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/parquet/pagechunking/startServer.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/parquet/pagechunking/startClient.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/parquet/pagechunking/startClient.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/parquet/pagechunking/runPageChunkingTestParquet.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/parquet/pagechunking/runPageChunkingTestParquet.sh</destinationFile>
+			                </fileSet>        
+                            
+			                <fileSet>
+			                  <sourceFile>scripts/parquet/filechunking/environment.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/parquet/filechunking/environment.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/parquet/filechunking/startServer.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/parquet/filechunking/startServer.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/parquet/filechunking/startClient.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/parquet/filechunking/startClient.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/parquet/filechunking/runFileChunkingTestParquet.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/parquet/filechunking/runFileChunkingTestParquet.sh</destinationFile>
+			                </fileSet>        
+		                </fileSets>
 	            	</configuration>
 	          	</execution>
         	</executions>

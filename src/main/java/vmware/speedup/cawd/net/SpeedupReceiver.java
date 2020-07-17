@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.DataInputStream;
 import java.io.OutputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +17,8 @@ public abstract class SpeedupReceiver {
 
 	protected ColumnarChunkStore chunkStore = null;
 	
+    private static final Logger logger = LogManager.getLogger(SpeedupReceiver.class);
+    
 	public abstract TransferStats receiveFile(String destinationFolder, InputStream is, OutputStream os) throws IOException;
 	
 	public static class TransferMeta {
@@ -42,18 +45,18 @@ public abstract class SpeedupReceiver {
 	protected TransferMeta initiateDataStreaming(InputStream is) throws IOException {
 		TransferMeta meta = new TransferMeta();
 		// read the size
-		byte[] nameSize = new byte[Integer.BYTES];
-		is.read(nameSize, 0, Integer.BYTES);
+        byte[] nameSize = new byte[Integer.BYTES];
+		((DataInputStream)is).readFully(nameSize, 0, Integer.BYTES);
 		int ns = BytesUtil.bytesToInt(nameSize);
 		if(ns > 0) {
 			// read the name
 			byte[] name = new byte[ns];
-			is.read(name, 0, ns);
+            ((DataInputStream)is).readFully(name, 0, ns);
 			meta.name = new String(name);
 			meta.totalLength += ns;
 			// and the size of the file
 			byte[] fileSize = new byte[Long.BYTES];
-			is.read(fileSize, 0, Long.BYTES);
+			((DataInputStream)is).readFully(fileSize, 0, Long.BYTES);
 			meta.size = BytesUtil.bytesToLong(fileSize);
 			meta.totalLength += Long.BYTES;
 			return meta;
@@ -78,7 +81,7 @@ public abstract class SpeedupReceiver {
 			logger.debug("Receiving incomming request, {} bytes available", is.available());
 			// first, size and name
 			byte[] sizeBuffer = new byte[Long.BYTES];
-			is.read(sizeBuffer, 0, Long.BYTES);
+			((DataInputStream)is).readFully(sizeBuffer, 0, Long.BYTES);
 			long size = BytesUtil.bytesToLong(sizeBuffer);
 			return size;
 		}
@@ -93,11 +96,11 @@ public abstract class SpeedupReceiver {
 				try {
 					byte[] sizeBuffer = new byte[Long.BYTES];
 					byte [] name = new byte[(int)size];
-					is.read(name, 0, (int)size);
+					((DataInputStream)is).readFully(name, 0, (int)size);
 					extraTransferBytes += name.length;
 					fileName = new String(name);
 					logger.debug("Incoming name {}", fileName);
-					is.read(sizeBuffer, 0, Long.BYTES);
+					((DataInputStream)is).readFully(sizeBuffer, 0, Long.BYTES);
 					extraTransferBytes += Long.BYTES;
 					long fileSize = BytesUtil.bytesToLong(sizeBuffer);
 					logger.info("Incomming file: {} of size {}", fileName, fileSize);
@@ -110,12 +113,12 @@ public abstract class SpeedupReceiver {
 					long startTime = System.currentTimeMillis();
 					while(received < fileSize) {
 						// read the chunk size
-						is.read(sizeBuffer, 0, Long.BYTES);
+						((DataInputStream)is).readFully(sizeBuffer, 0, Long.BYTES);
 						extraTransferBytes += Long.BYTES;
 						long chunkSize = BytesUtil.bytesToLong(sizeBuffer);
 						if(chunkSize > 0) {
 							byte [] chunk = new byte[(int)chunkSize];
-							is.read(chunk, 0, chunk.length);
+							((DataInputStream)is).readFully(chunk, 0, chunk.length);
 							// write it back
 							fos.write(chunk, 0, chunk.length);
 							received += chunkSize;

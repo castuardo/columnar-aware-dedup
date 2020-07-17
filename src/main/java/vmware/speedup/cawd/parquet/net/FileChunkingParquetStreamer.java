@@ -15,14 +15,14 @@ import vmware.speedup.cawd.common.BytesUtil;
 import vmware.speedup.cawd.common.TransferStats;
 import vmware.speedup.cawd.common.TransferStats.TransferStatValue;
 import vmware.speedup.cawd.net.SpeedupStreamer;
-import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm;
-import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm.ParquetFileChunk;
+import vmware.speedup.cawd.parquet.dedup.FileChunkingParquetChunkingAlgorithm;
+import vmware.speedup.cawd.parquet.dedup.FileChunkingParquetChunkingAlgorithm.ParquetFileChunk;
 
-public class NaiveParquetStreamer extends SpeedupStreamer {
+public class FileChunkingParquetStreamer extends SpeedupStreamer {
 
-	private static final Logger logger = LogManager.getLogger(NaiveParquetStreamer.class);
+	private static final Logger logger = LogManager.getLogger(FileChunkingParquetStreamer.class);
 	
-	private NaiveParquetChunkingAlgorithm algorithm = new NaiveParquetChunkingAlgorithm();
+	private FileChunkingParquetChunkingAlgorithm algorithm = new FileChunkingParquetChunkingAlgorithm();
 	
 	// Regular chunk:
 	// <type-int><size-long><data>	

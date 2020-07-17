@@ -15,14 +15,14 @@ import vmware.speedup.cawd.common.BytesUtil;
 import vmware.speedup.cawd.common.TransferStats;
 import vmware.speedup.cawd.common.TransferStats.TransferStatValue;
 import vmware.speedup.cawd.net.SpeedupStreamer;
-import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm;
-import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm.ParquetFileChunk;
+import vmware.speedup.cawd.parquet.dedup.PageChunkingParquetChunkingAlgorithm;
+import vmware.speedup.cawd.parquet.dedup.PageChunkingParquetChunkingAlgorithm.ParquetFileChunk;
 
-public class NaiveParquetStreamer extends SpeedupStreamer {
+public class PageChunkingParquetStreamer extends SpeedupStreamer {
 
-	private static final Logger logger = LogManager.getLogger(NaiveParquetStreamer.class);
+	private static final Logger logger = LogManager.getLogger(PageChunkingParquetStreamer.class);
 	
-	private NaiveParquetChunkingAlgorithm algorithm = new NaiveParquetChunkingAlgorithm();
+	private PageChunkingParquetChunkingAlgorithm algorithm = new PageChunkingParquetChunkingAlgorithm();
 	
 	// Regular chunk:
 	// <type-int><size-long><data>	
@@ -113,7 +113,7 @@ public class NaiveParquetStreamer extends SpeedupStreamer {
 			
             logger.info("Starting file transfer for {}", fileName);
 			TransferStats nn = initiateTransfer(fileName, os);
-            stats.appendStats(nn);
+			stats.appendStats(nn);
 			long startTime = System.currentTimeMillis();
 			List<ParquetFileChunk> chunks = algorithm.eagerChunking(fileName);
 			long parquetParsingOverhead = System.currentTimeMillis() - startTime;
@@ -124,10 +124,11 @@ public class NaiveParquetStreamer extends SpeedupStreamer {
 			for(ParquetFileChunk chunk : chunks) {
 				TransferStats partial = null;
 				switch(chunk.getType()) {
-					case DataPageV1:
+                    case DictPage:
+                    case DataPageV1:
                     case DataPageV2:
                     case ParquetFooter:
-                        logger.debug("Sending special chunk");
+                            logger.debug("Sending special chunk");
 						partial = handleSpecialChunk(fileName, chunk, is, os, fis);
 						break;
 					default:

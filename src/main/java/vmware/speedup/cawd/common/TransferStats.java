@@ -36,7 +36,7 @@ public class TransferStats {
 	}
 	
 	public static TransferStats globalStats(List<TransferStats> all) {
-		TransferStats aggregated = new TransferStats("general");
+        TransferStats aggregated = new TransferStats("general");
 		for(TransferStats stats : all) {
 			TransferStats aggPerFile = aggregate(stats);
 			aggregated.appendStats(aggPerFile);
@@ -73,11 +73,39 @@ public class TransferStats {
 	
 	@Override
 	public String toString() {
-		return new StringBuilder().append("file=") 
-				.append(filePath)
-				.append(", stats=")
-				.append(Arrays.toString(stats.toArray()))
-				.toString();
+        double transSize = 0, extraTransSize = 0, allFileSize = 0;
+        for(TransferStatValue value : stats){
+            switch (value.getType()) {
+                case FileBytes:
+                    allFileSize += value.getValue();
+                    break;
+                case ExtraTransferBytes:
+                    extraTransSize += value.getValue();
+                    break;
+                case TransferBytes:
+                    transSize += value.getValue();
+                    break;
+                default:
+                    break;
+            }
+        }
+        double totalTransSize = transSize + extraTransSize;
+        if(allFileSize == 0){
+            return new StringBuilder().append("file=") 
+            .append(filePath)
+            .append(", stats=")
+            .append(Arrays.toString(stats.toArray()))
+            .toString();
+        }
+        else{
+            return new StringBuilder().append("file=") 
+            .append(filePath)
+            .append(", stats=")
+            .append(Arrays.toString(stats.toArray()))
+            .append(String.format("; dedup ratio: %.3f%%, extra/totalTransfer = %.3f%%", (1 - totalTransSize / allFileSize) * 100, extraTransSize / totalTransSize * 100))
+            .toString();
+        }
+		
 	}
 	
 	
@@ -108,8 +136,16 @@ public class TransferStats {
 			this.value = value;
 			this.unit = unit;
 			this.ocurrences = 1;
-		}
-		
+        }
+        
+        public Type getType(){
+            return this.type;
+        }
+        
+        public double getValue(){
+            return this.value;
+        }
+
 		public double percentile(double percentile) {
 		    int index = (int) Math.ceil(percentile / 100.0 * values.size());
 		    return values.get(index-1);

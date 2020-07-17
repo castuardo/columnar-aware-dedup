@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.DataInputStream;
 import java.io.OutputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,6 +16,7 @@ import vmware.speedup.cawd.dedup.ColumnarChunkStore;
 public abstract class SpeedupStreamer {
 	
 	public abstract TransferStats transferFile(String fileName, InputStream is, OutputStream os) throws IOException;
+    private static final Logger logger = LogManager.getLogger(SpeedupStreamer.class);
 	
 	public static enum TransferStatus {
 		ONGOING,
@@ -27,14 +29,16 @@ public abstract class SpeedupStreamer {
 		// compose...
 		File tmp = new File(fileName);
 		long fileLength = tmp.length();
-		int nameLength = tmp.getName().length();
+        int nameLength = tmp.getName().length();
+        
 		byte [] buffer = new byte[Integer.BYTES + nameLength + Long.BYTES];
 		System.arraycopy(BytesUtil.intToBytes(nameLength), 0, buffer, 0, Integer.BYTES);
 		System.arraycopy(tmp.getName().getBytes(), 0, buffer, Integer.BYTES, tmp.getName().getBytes().length);
 		System.arraycopy(BytesUtil.longToBytes(fileLength), 0, buffer, Integer.BYTES + tmp.getName().getBytes().length, Long.BYTES);
 		// and send this
 		os.write(buffer);
-		os.flush();stats.getStats().add(new TransferStatValue(
+        os.flush();
+        stats.getStats().add(new TransferStatValue(
 				TransferStatValue.Type.ExtraTransferBytes, Integer.BYTES + nameLength + Long.BYTES , TransferStatValue.Unit.Bytes));
 		return stats;
 		
@@ -42,7 +46,7 @@ public abstract class SpeedupStreamer {
 	
 	protected TransferStatus waitForAck(InputStream is) throws IOException {
 		byte [] ack = new byte[Integer.BYTES];
-		is.read(ack, 0, Integer.BYTES);
+		((DataInputStream)is).readFully(ack, 0, Integer.BYTES);
 		int a = BytesUtil.bytesToInt(ack);
 		return a > 0? TransferStatus.SUCCESS : (a == 0? TransferStatus.ONGOING : TransferStatus.ERROR);
 	}
@@ -104,7 +108,7 @@ public abstract class SpeedupStreamer {
 				os.flush();
 				// receive ack
 				byte[] ack = new byte[Long.BYTES];
-				is.read(ack, 0, Long.BYTES);
+				((DataInputStream)is).readFully(ack, 0, Long.BYTES);
 				extraTransferBytes += Long.BYTES;
 				long ok = BytesUtil.bytesToLong(ack);
 				logger.debug("Received ack={}", ok);

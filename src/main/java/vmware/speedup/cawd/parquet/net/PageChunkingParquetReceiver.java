@@ -17,18 +17,18 @@ import vmware.speedup.cawd.common.BytesUtil;
 import vmware.speedup.cawd.common.TransferStats;
 import vmware.speedup.cawd.common.TransferStats.TransferStatValue;
 import vmware.speedup.cawd.net.SpeedupReceiver;
-import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkStore;
-import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm;
-import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm.ParquetFileChunk;
-import vmware.speedup.cawd.parquet.dedup.NaiveParquetChunkingAlgorithm.ParquetFileChunk.ChunkType;
+import vmware.speedup.cawd.parquet.dedup.PageChunkingParquetChunkStore;
+import vmware.speedup.cawd.parquet.dedup.PageChunkingParquetChunkingAlgorithm;
+import vmware.speedup.cawd.parquet.dedup.PageChunkingParquetChunkingAlgorithm.ParquetFileChunk;
+import vmware.speedup.cawd.parquet.dedup.PageChunkingParquetChunkingAlgorithm.ParquetFileChunk.ChunkType;
 
-public class NaiveParquetReceiver extends SpeedupReceiver {
+public class PageChunkingParquetReceiver extends SpeedupReceiver {
 
-	private static final Logger logger = LogManager.getLogger(NaiveParquetReceiver.class);
+	private static final Logger logger = LogManager.getLogger(PageChunkingParquetReceiver.class);
 	
 	private long totalBytesReceived = 0;
-	private NaiveParquetChunkStore chunkStore = new NaiveParquetChunkStore();
-	private NaiveParquetChunkingAlgorithm algorithm = new NaiveParquetChunkingAlgorithm();
+	private PageChunkingParquetChunkStore chunkStore = new PageChunkingParquetChunkStore();
+	private PageChunkingParquetChunkingAlgorithm algorithm = new PageChunkingParquetChunkingAlgorithm();
 	
 	// here, a chunk looks like <size-long><data>
 	private TransferStats handleRegularChunk(String fileName, InputStream is, FileOutputStream fos) throws IOException {
@@ -98,9 +98,9 @@ public class NaiveParquetReceiver extends SpeedupReceiver {
 			totalBytesReceived += size;
 			stats.getStats().add(new TransferStatValue(
 					TransferStatValue.Type.TransferBytes, content.length , TransferStatValue.Unit.Bytes));
-        }
-		stats.getStats().add(new TransferStatValue(
-            TransferStatValue.Type.ExtraTransferBytes, Integer.BYTES , TransferStatValue.Unit.Bytes));
+		}
+        stats.getStats().add(new TransferStatValue(
+                TransferStatValue.Type.ExtraTransferBytes, Integer.BYTES , TransferStatValue.Unit.Bytes));
 		return stats;
 		
 		
@@ -125,15 +125,16 @@ public class NaiveParquetReceiver extends SpeedupReceiver {
 				fos = new FileOutputStream(fileName);
 				TransferStats all = new TransferStats(fileName);
 				all.getStats().add(new TransferStatValue(
-                        TransferStatValue.Type.ExtraTransferBytes, meta.getTotalLength() + Integer.BYTES , TransferStatValue.Unit.Bytes));
+						TransferStatValue.Type.ExtraTransferBytes, meta.getTotalLength() + Integer.BYTES , TransferStatValue.Unit.Bytes));
 				while(totalBytesReceived < meta.getSize()) {
 					TransferStats stats = null;
-                    ChunkType nextChunkType = readNextType(is);
+					ChunkType nextChunkType = readNextType(is);
                     all.getStats().add(new TransferStatValue(
                         TransferStatValue.Type.ExtraTransferBytes, Integer.BYTES , TransferStatValue.Unit.Bytes));
-					switch(nextChunkType) {
+                    switch(nextChunkType) {
+                        case DictPage:
                         case DataPageV1:
-    					case DataPageV2:
+                        case DataPageV2:
                         case ParquetFooter:
                             logger.debug("Receiving special chunk...");
 							stats = handleSpecialChunk(fileName, is, os, fos);
