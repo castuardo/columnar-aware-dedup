@@ -85,6 +85,8 @@ public class PageChunkingParquetChunkingAlgorithm extends ChunkingAlgorithm<Page
                         // page meta data chunk
                         identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.PageHeader, curPos, rawbytes.length));
                         curPos += rawbytes.length;
+                        // the page header is usually very small, smaller than the size of one chunk.
+                        // curPos = PackChunkingWrapper(pack, rawbytes, identifiedChunks, buffer, curPos, ParquetFileChunk.ChunkType.PageHeader);
 
                         switch (pageHeader.type) {
                             case DICTIONARY_PAGE:
