@@ -9,6 +9,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -97,7 +98,10 @@ public class SpeedupClient extends Thread {
 				files = Arrays.asList(inputFile);
 			}
 			
-			logger.info("Going to process: {}", Arrays.toString(files.toArray()));
+			// sort them a little
+			Collections.sort(files);
+			
+			logger.info("Going to process: {} files", files.size());
 			
 			// now do the hustle..
 			if(files != null && files.size() > 0) {

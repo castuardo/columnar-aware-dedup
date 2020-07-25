@@ -1,5 +1,9 @@
 package vmware.speedup.cawd.common;
 
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
 public class BytesUtil {   
 	 
 	 public static byte[] longToBytes(long lng) {
@@ -43,6 +47,12 @@ public class BytesUtil {
 	            (0xff & data[2]) << 8   |
 	            (0xff & data[3]) << 0
 	            );
+		}
+	 
+	 public static byte[] readNextBytes(DataInputStream is, int size) throws IOException {
+			byte[] bb = new byte[size];
+			is.readFully(bb, 0, size);
+			return bb;
 		}
 	
 }

@@ -57,6 +57,10 @@ public abstract class SpeedupStreamer {
 			this.bufferSize = Integer.valueOf(System.getProperty("cawd.streamer.plain.bufferSize", "4096"));
 		}
 		
+		public PlainSpeedupStreamer(int bufferSize) {
+			this.bufferSize = bufferSize;
+		}
+		
 		@Override
 		public TransferStats transferFile(String fileName, InputStream is, OutputStream os) throws IOException {
 			TransferStats stats = new TransferStats(fileName);
@@ -95,9 +99,8 @@ public abstract class SpeedupStreamer {
 					// now send...
 					os.write(buffer, 0, read + Long.BYTES);
 					// done...
-					bytesSent += read;
+					bytesSent += read + Long.BYTES;
 					remaining -= read;
-					extraTransferBytes += Long.BYTES;
 					logger.debug("sent {}, {} bytes remaining...", read, remaining);
 				}		
 				// flush...
@@ -105,7 +108,6 @@ public abstract class SpeedupStreamer {
 				// receive ack
 				byte[] ack = new byte[Long.BYTES];
 				is.read(ack, 0, Long.BYTES);
-				extraTransferBytes += Long.BYTES;
 				long ok = BytesUtil.bytesToLong(ack);
 				logger.debug("Received ack={}", ok);
 				if(ok > 0) {

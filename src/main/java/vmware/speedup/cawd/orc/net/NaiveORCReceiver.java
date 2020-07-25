@@ -44,15 +44,13 @@ public class NaiveORCReceiver extends SpeedupReceiver {
 		// and write
 		fos.write(dataBuff);
 		stats.getStats().add(new TransferStatValue(
-				TransferStatValue.Type.TransferBytes, size , TransferStatValue.Unit.Bytes));
-		stats.getStats().add(new TransferStatValue(
-				TransferStatValue.Type.ExtraTransferBytes, Long.BYTES , TransferStatValue.Unit.Bytes));
+				TransferStatValue.Type.TransferBytes, size + Long.BYTES + Integer.BYTES, TransferStatValue.Unit.Bytes));
 		totalBytesReceived += size;
 		return stats;
 	}
 	
 	// here, a chunk looks like <hashSize-int><hash>
-	private TransferStats handleSpecialChunk(String fileName, InputStream is, OutputStream os, FileOutputStream fos) throws IOException {
+	private TransferStats handleSpecialChunk(String fileName, InputStream is, OutputStream os, FileOutputStream fos, ORCFileChunk.ChunkType type) throws IOException {
 		TransferStats stats = new TransferStats(fileName);
 		byte[] sizeBuff = new byte[Integer.BYTES];
 		((DataInputStream)is).readFully(sizeBuff, 0, Integer.BYTES);
@@ -61,9 +59,7 @@ public class NaiveORCReceiver extends SpeedupReceiver {
 		byte[] hash = new byte[hashSize];
 		((DataInputStream)is).readFully(hash, 0, hashSize);
 		stats.getStats().add(new TransferStatValue(
-				TransferStatValue.Type.ExtraTransferBytes, Integer.BYTES , TransferStatValue.Unit.Bytes));
-		stats.getStats().add(new TransferStatValue(
-				TransferStatValue.Type.TransferBytes, hashSize , TransferStatValue.Unit.Bytes));
+				TransferStatValue.Type.TransferBytes, hashSize + Integer.BYTES + Integer.BYTES, TransferStatValue.Unit.Bytes));
 		// do we have it?
 		ORCFileChunk chunk = chunkStore.findChunkBySignature(hash);
 		if(chunk != null) {
@@ -73,6 +69,14 @@ public class NaiveORCReceiver extends SpeedupReceiver {
 			// and lets write it...
 			fos.write(chunk.getContent());
 			totalBytesReceived += chunk.getContent().length;
+			if(type.equals(ORCFileChunk.ChunkType.Data)) {
+				stats.getStats().add(new TransferStatValue(
+						TransferStatValue.Type.StripeHit, 1 , TransferStatValue.Unit.Count));
+			}
+			else if(type.equals(ORCFileChunk.ChunkType.Footer)){
+				stats.getStats().add(new TransferStatValue(
+						TransferStatValue.Type.FooterHit, 1 , TransferStatValue.Unit.Count));
+			}
 			stats.getStats().add(new TransferStatValue(
 					TransferStatValue.Type.DedupBytes, chunk.getContent().length , TransferStatValue.Unit.Bytes));
 		}
@@ -97,9 +101,7 @@ public class NaiveORCReceiver extends SpeedupReceiver {
 			}
 			totalBytesReceived += size;
 			stats.getStats().add(new TransferStatValue(
-					TransferStatValue.Type.TransferBytes, content.length , TransferStatValue.Unit.Bytes));
-			stats.getStats().add(new TransferStatValue(
-					TransferStatValue.Type.ExtraTransferBytes, Integer.BYTES , TransferStatValue.Unit.Bytes));
+					TransferStatValue.Type.TransferBytes, content.length + Integer.BYTES, TransferStatValue.Unit.Bytes));
 		}
 		return stats;
 		
@@ -132,11 +134,11 @@ public class NaiveORCReceiver extends SpeedupReceiver {
 					switch(nextChunkType) {
 						case Data: 
 							logger.debug("Receiving special chunk...");
-							stats = handleSpecialChunk(fileName, is, os, fos);
+							stats = handleSpecialChunk(fileName, is, os, fos, nextChunkType);
 							break;
 						case Footer: 
 							logger.debug("Receiving special chunk...");
-							stats = handleSpecialChunk(fileName, is, os, fos);
+							stats = handleSpecialChunk(fileName, is, os, fos, nextChunkType);
 							break;
 						default: 
 							logger.debug("Receiving regular chunk...");

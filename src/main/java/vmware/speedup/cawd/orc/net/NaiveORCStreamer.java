@@ -17,6 +17,7 @@ import vmware.speedup.cawd.common.TransferStats.TransferStatValue;
 import vmware.speedup.cawd.net.SpeedupStreamer;
 import vmware.speedup.cawd.orc.dedup.NaiveORCChunkingAlgorithm;
 import vmware.speedup.cawd.orc.dedup.NaiveORCChunkingAlgorithm.ORCFileChunk;
+import vmware.speedup.cawd.orc.dedup.StripePlusColumnORCChunkingAlgorithm.StripePlusColumnORCFileChunk;
 
 public class NaiveORCStreamer extends SpeedupStreamer {
 
@@ -40,9 +41,7 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 		os.write(buffer);
 		os.flush();
 		stats.getStats().add(new TransferStatValue(
-				TransferStatValue.Type.TransferBytes, read , TransferStatValue.Unit.Bytes));
-		stats.getStats().add(new TransferStatValue(
-				TransferStatValue.Type.ExtraTransferBytes, Long.BYTES + Integer.BYTES , TransferStatValue.Unit.Bytes));
+				TransferStatValue.Type.TransferBytes, buffer.length, TransferStatValue.Unit.Bytes));
 		return stats;
 	}
 	
@@ -51,10 +50,9 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 	// Special chunk reply:
 		// 0: dont have it
 		// 1: thanks!
-	private TransferStats handleSpecialChunk(String fileName, ORCFileChunk special, InputStream is, OutputStream os, FileInputStream fis) throws IOException {
+	private TransferStats handleSpecialChunk(String fileName, ORCFileChunk special, InputStream is, OutputStream os, FileInputStream fis, ORCFileChunk.ChunkType type) throws IOException {
 		TransferStats stats = new TransferStats(fileName);
 		int sentBytes = 0;
-		int overheadBytes = 0;
 		try {
 			// read the content first
 			byte[] content = new byte[(int)special.getSize()];
@@ -70,7 +68,7 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 			// and send it...
 			os.write(buffer);
 			os.flush();
-			overheadBytes += buffer.length;
+			sentBytes += buffer.length;
 			// now, we need to wait for the answer
 			byte[] reply = new byte[Integer.BYTES];
 			((DataInputStream)is).readFully(reply, 0, Integer.BYTES);
@@ -84,17 +82,22 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 				// send...
 				os.write(contentMessage);
 				os.flush();
-				sentBytes += content.length;
-				overheadBytes += Integer.BYTES;
+				sentBytes += contentMessage.length;
 			}
 			else {
 				stats.getStats().add(new TransferStatValue(
 						TransferStatValue.Type.DedupBytes, content.length , TransferStatValue.Unit.Bytes));
+				if(type.equals(ORCFileChunk.ChunkType.Data)) {
+					stats.getStats().add(new TransferStatValue(
+							TransferStatValue.Type.StripeHit, 1 , TransferStatValue.Unit.Count));
+				}
+				else if(type.equals(ORCFileChunk.ChunkType.Footer)){
+					stats.getStats().add(new TransferStatValue(
+							TransferStatValue.Type.FooterHit, 1 , TransferStatValue.Unit.Count));
+				}
 			}
 			stats.getStats().add(new TransferStatValue(
 					TransferStatValue.Type.TransferBytes, sentBytes , TransferStatValue.Unit.Bytes));
-			stats.getStats().add(new TransferStatValue(
-					TransferStatValue.Type.ExtraTransferBytes, overheadBytes , TransferStatValue.Unit.Bytes));
 		}
 		catch(Exception e) {
 			throw new IOException(e);
@@ -123,11 +126,11 @@ public class NaiveORCStreamer extends SpeedupStreamer {
 				switch(chunk.getType()) {
 					case Data:
 						logger.debug("Sending special chunk");
-						partial = handleSpecialChunk(fileName, chunk, is, os, fis);
+						partial = handleSpecialChunk(fileName, chunk, is, os, fis, chunk.getType());
 						break;
 					case Footer:
 						logger.debug("Sending special chunk");
-						partial = handleSpecialChunk(fileName, chunk, is, os, fis);
+						partial = handleSpecialChunk(fileName, chunk, is, os, fis, chunk.getType());
 						break;
 					default:
 						logger.debug("Sending regular chunk");

@@ -152,6 +152,23 @@
 			                <fileSet>
 			                  <sourceFile>scripts/orc/column/runColumnTestORC.sh</sourceFile>
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/column/runColumnTestORC.sh</destinationFile>
+			                </fileSet> 
+			                <!-- s+p test (orc/stripe+column/runStripePlusColumnTestORC.sh) -->  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/stripe+column/environment.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/stripe+column/environment.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/stripe+column/startServer.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/stripe+column/startServer.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/stripe+column/startClient.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/stripe+column/startClient.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/stripe+column/runStripePlusColumnTestORC.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/stripe+column/runStripePlusColumnTestORC.sh</destinationFile>
 			                </fileSet>        
                             <!-- parquet test (parquet/runTestParquet.sh) -->  
 			                <fileSet>

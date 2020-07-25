@@ -10,6 +10,8 @@ public abstract class ChunkingAlgorithm<T extends ChunkingAlgorithm.Chunk> {
 	
 	public abstract List<T> eagerChunking(String fileName) throws IOException;
 	
+	public static final int SHA1_SIZE = 20; 
+	
 	public byte[] naiveSHA1(byte[] buffer) throws NoSuchAlgorithmException {
 		MessageDigest md = MessageDigest.getInstance("SHA-1"); 
 		return md.digest(buffer);

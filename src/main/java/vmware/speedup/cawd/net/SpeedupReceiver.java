@@ -90,6 +90,7 @@ public abstract class SpeedupReceiver {
 				String fileName = null;
 				FileOutputStream fos = null;
 				long extraTransferBytes = Long.BYTES;
+				long overhead = 0;
 				try {
 					byte[] sizeBuffer = new byte[Long.BYTES];
 					byte [] name = new byte[(int)size];
@@ -112,6 +113,7 @@ public abstract class SpeedupReceiver {
 						// read the chunk size
 						is.read(sizeBuffer, 0, Long.BYTES);
 						extraTransferBytes += Long.BYTES;
+						overhead += Long.BYTES;
 						long chunkSize = BytesUtil.bytesToLong(sizeBuffer);
 						if(chunkSize > 0) {
 							byte [] chunk = new byte[(int)chunkSize];
@@ -135,7 +137,7 @@ public abstract class SpeedupReceiver {
 					// done
 					logger.info("Done with file={}, received={} bytes...", fileName, received);
 					stats.getStats().add(new TransferStatValue(
-							TransferStatValue.Type.TransferBytes, received, TransferStatValue.Unit.Bytes));
+							TransferStatValue.Type.TransferBytes, received + overhead, TransferStatValue.Unit.Bytes));
 					stats.getStats().add(new TransferStatValue(
 							TransferStatValue.Type.ExtraTransferBytes, extraTransferBytes, TransferStatValue.Unit.Bytes));
 					stats.getStats().add(new TransferStatValue(

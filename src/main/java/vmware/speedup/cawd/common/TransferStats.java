@@ -86,15 +86,26 @@ public class TransferStats {
 		public enum Type {
 			FileBytes,
 			TransferBytes,
+			TotalBytes,
 			TransferTime,
 			ExtraTransferBytes,
 			DedupBytes,
-			ParsingOverhead
+			ParsingOverhead,
+			StripeHit,
+			StripeMiss,
+			ColumnHit,
+			ColumnMiss,
+			FooterHit,
+			FooterMiss,
+			SmallColumn,
+			StripeSize,
+			FooterSize,
 		}
 		
 		public enum Unit {
 			Bytes,
-			Milliseconds
+			Milliseconds,
+			Count
 		};
 		
 		private int ocurrences = 0;
