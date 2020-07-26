@@ -81,6 +81,14 @@
 			                  <sourceFile>scripts/testmain/runTestMain.sh</sourceFile>
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/testmain/runTestMain.sh</destinationFile>
 			                </fileSet>   
+			                <fileSet>
+			                  <sourceFile>scripts/alluxiosim/environment.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/alluxiosim/environment.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/alluxiosim/runAlluxioSim.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/alluxiosim/runAlluxioSim.sh</destinationFile>
+			                </fileSet>   
 			                <!-- plain test (plain/runTestPlain.sh) -->  
 			                <fileSet>
 			                  <sourceFile>conf/server-default.xml</sourceFile>
@@ -248,11 +256,17 @@
     </dependency>
 
     <dependency>
+    	<groupId>com.fasterxml.jackson.core</groupId>
+    	<artifactId>jackson-databind</artifactId>
+    	<version>2.9.8</version>
+    </dependency>
+
+    <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
         <version>2.11.0</version>
     </dependency>
-
+    
     <dependency>
         <groupId>com.eyalzo.filesimilarityanalysis</groupId>
         <artifactId>filesimilarityanalysis</artifactId>
