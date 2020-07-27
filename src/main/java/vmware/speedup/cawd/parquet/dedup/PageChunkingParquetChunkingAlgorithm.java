@@ -69,8 +69,10 @@ public class PageChunkingParquetChunkingAlgorithm extends ChunkingAlgorithm<Page
             byte[] rawbytes;
 
             // the first chunk is the Magic chars
-            identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.ParquetHeader, curPos, MAGIC.length));
-            curPos += MAGIC.length;
+            // identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.ParquetHeader, curPos, MAGIC.length));
+            // curPos += MAGIC.length;
+            rawbytes = MAGIC;
+            curPos = PackChunkingWrapper(pack, rawbytes, identifiedChunks, buffer, curPos, ParquetFileChunk.ChunkType.ParquetHeader);
 
             // reading the whole next row group including multiple chunks and each chunk includes multiple pages (dict page or data page)
             PageReadStore pageStore = null;
@@ -83,10 +85,10 @@ public class PageChunkingParquetChunkingAlgorithm extends ChunkingAlgorithm<Page
                         Util.writePageHeader(pageHeader, out);
                         rawbytes = out.toByteArray();
                         // page meta data chunk
-                        identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.PageHeader, curPos, rawbytes.length));
-                        curPos += rawbytes.length;
+                        // identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.PageHeader, curPos, rawbytes.length));
+                        // curPos += rawbytes.length;
                         // the page header is usually very small, smaller than the size of one chunk.
-                        // curPos = PackChunkingWrapper(pack, rawbytes, identifiedChunks, buffer, curPos, ParquetFileChunk.ChunkType.PageHeader);
+                        curPos = PackChunkingWrapper(pack, rawbytes, identifiedChunks, buffer, curPos, ParquetFileChunk.ChunkType.PageHeader);
 
                         switch (pageHeader.type) {
                             case DICTIONARY_PAGE:
@@ -122,8 +124,9 @@ public class PageChunkingParquetChunkingAlgorithm extends ChunkingAlgorithm<Page
             out.write(MAGIC);
             rawbytes = out.toByteArray();
             // after footer, there are eight bytes. 
-            identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.AfterFooter, curPos, rawbytes.length));
-            curPos += rawbytes.length;
+            // identifiedChunks.add(new ParquetFileChunk(ParquetFileChunk.ChunkType.AfterFooter, curPos, rawbytes.length));
+            // curPos += rawbytes.length;
+            curPos = PackChunkingWrapper(pack, rawbytes, identifiedChunks, buffer, curPos, ParquetFileChunk.ChunkType.AfterFooter);
             
             return identifiedChunks;
         }
@@ -139,7 +142,15 @@ public class PageChunkingParquetChunkingAlgorithm extends ChunkingAlgorithm<Page
         pack.getChunksAll(curChunkList, rawbytes, 0, rawbytes.length);
         for (Long curChunk : curChunkList) {
             int curChunkLen = PackChunking.chunkToLen(curChunk);
-            identifiedChunks.add(new ParquetFileChunk(chunkType, curPos, curChunkLen));
+            ParquetFileChunk chunk = new ParquetFileChunk(chunkType, curPos, curChunkLen);
+            try{
+                chunk.setSignature(naiveSHA1(Arrays.copyOfRange(rawbytes, rawLenCumu, rawLenCumu + curChunkLen)));
+            }
+            catch(Exception e){
+                logger.error(e.toString());
+            }
+
+            identifiedChunks.add(chunk);
             curPos += curChunkLen;
             rawLenCumu += curChunkLen;
         }
