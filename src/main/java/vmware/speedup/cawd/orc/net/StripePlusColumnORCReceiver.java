@@ -43,7 +43,7 @@ public class StripePlusColumnORCReceiver extends SpeedupReceiver {
 	private StripePlusColumnORCChunkStore stripeStore = new StripePlusColumnORCChunkStore();
 	private StripePlusColumnORCChunkStore columnStore = new StripePlusColumnORCChunkStore();
 	private StripePlusColumnORCChunkingAlgorithm algorithm = new StripePlusColumnORCChunkingAlgorithm();
-
+	
 	private StripePlusColumnORCFileChunk.ChunkType readNextType(DataInputStream is) throws IOException {
 		int nextOrdinal = BytesUtil.bytesToInt(BytesUtil.readNextBytes(is, Integer.BYTES));
 		return StripePlusColumnORCFileChunk.fromOrdinal(nextOrdinal);
@@ -199,7 +199,7 @@ public class StripePlusColumnORCReceiver extends SpeedupReceiver {
 				OrcProto.StripeFooter stripeFooter = OrcProto.StripeFooter.parseFrom(footer);
 				// the index here is relative to the stripe data, which is zero
 				int currentOffset = 0;
-				List<StripePlusColumnORCFileChunk> columns = algorithm.getStripeColumnChunks(stripeFooter, currentOffset);
+				List<StripePlusColumnORCFileChunk> columns = algorithm.getStripeColumnChunks(stripeFooter, currentOffset, null);
 				for(StripePlusColumnORCFileChunk column : columns) {
 					byte[] columnChunk = new byte[(int)column.getSize()];
 					// copy the content

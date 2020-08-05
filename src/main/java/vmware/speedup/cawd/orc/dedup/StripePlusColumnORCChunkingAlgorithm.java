@@ -13,6 +13,8 @@ import org.apache.orc.OrcFile;
 import org.apache.orc.OrcProto;
 import org.apache.orc.Reader;
 import org.apache.orc.StripeInformation;
+
+import vmware.speedup.cawd.common.ColumnTypes.ORCColumnType;
 import vmware.speedup.cawd.dedup.ChunkingAlgorithm;
 
 
@@ -31,6 +33,7 @@ public class StripePlusColumnORCChunkingAlgorithm extends ChunkingAlgorithm<Stri
 			rand = new RandomAccessFile(fileName, "r");
 			long lastStripeFooterEnds = 0;
 			long currentStripeOffset = 3;
+			List<String> columnTypes = getColumnTypes(orcReader);
 			for(StripeInformation stripe : orcReader.getStripes()) {
 				// so, the indexes are regular chunks...
 				chunks.add(new StripePlusColumnORCFileChunk(StripePlusColumnORCFileChunk.ChunkType.StripeIndex, currentStripeOffset, stripe.getIndexLength()));
@@ -38,7 +41,7 @@ public class StripePlusColumnORCChunkingAlgorithm extends ChunkingAlgorithm<Stri
 				StripePlusColumnORCFileChunk stripeChunk = getStripeDataChunk(stripe, currentStripeOffset);
 				chunks.add(stripeChunk);
 				// now, get the column chunks
-				stripeChunk.subchunks.addAll(getStripeColumnChunks(getStripeFooter(rand, stripe), currentStripeOffset + stripe.getIndexLength()));
+				stripeChunk.subchunks.addAll(getStripeColumnChunks(getStripeFooter(rand, stripe), currentStripeOffset + stripe.getIndexLength(), columnTypes));
 				// and get the footer...
 				StripePlusColumnORCFileChunk footerChunk = getStripeDataFooterChunk(stripe, currentStripeOffset);
 				chunks.add(footerChunk);
@@ -69,7 +72,7 @@ public class StripePlusColumnORCChunkingAlgorithm extends ChunkingAlgorithm<Stri
 		return new StripePlusColumnORCFileChunk(StripePlusColumnORCFileChunk.ChunkType.StripeFooter, dataStarts, dataSize);
 	}
 	
-	public List<StripePlusColumnORCFileChunk> getStripeColumnChunks(OrcProto.StripeFooter stripeFooter, long currentOffset){
+	public List<StripePlusColumnORCFileChunk> getStripeColumnChunks(OrcProto.StripeFooter stripeFooter, long currentOffset, List<String> columnTypes){
 		int streamCounter = 1;
 		int processedColumns = 0;
 		// the start offset is where the data starts in the file...
@@ -102,7 +105,12 @@ public class StripePlusColumnORCChunkingAlgorithm extends ChunkingAlgorithm<Stri
 					}
 				}
 				// we have the whole column size, so add it
-				colChunks.add(new StripePlusColumnORCFileChunk(StripePlusColumnORCFileChunk.ChunkType.Column, currentOffset, columnLength));
+				if(columnTypes != null) {
+					colChunks.add(new StripePlusColumnORCFileChunk(StripePlusColumnORCFileChunk.ChunkType.Column, currentOffset, columnLength, columnTypes.get(column - 1)));
+				}
+				else {
+					colChunks.add(new StripePlusColumnORCFileChunk(StripePlusColumnORCFileChunk.ChunkType.Column, currentOffset, columnLength));
+				}
 				currentOffset += columnLength;
 				++processedColumns;
 			}
@@ -119,6 +127,25 @@ public class StripePlusColumnORCChunkingAlgorithm extends ChunkingAlgorithm<Stri
 		rand.read(stripeFooter, 0, (int)stripe.getFooterLength());
 		OrcProto.StripeFooter footer = OrcProto.StripeFooter.parseFrom(stripeFooter);
 		return footer;
+	}
+	
+	// this gets the column Types as declared in the schema. Its ugly, and works for simple files
+	private List<String> getColumnTypes(Reader orcReader) throws IOException {
+		String schema = orcReader.getSchema().toString();
+		schema = schema.replaceAll("struct<", "");
+		schema = schema.replaceAll(">", "");
+		String [] cols = schema.split(",");
+		List<String> columns = new ArrayList<String>();
+		for(String col : cols) {
+			String [] data = col.split(":");
+			if(data.length == 2) {
+				if(data[1].contains("(")) {
+					data[1] = data[1].substring(0, data[1].indexOf("("));
+				}
+				columns.add(data[1]);
+			}
+		}
+		return columns;
 	}
 	
 	
@@ -170,6 +197,16 @@ public class StripePlusColumnORCChunkingAlgorithm extends ChunkingAlgorithm<Stri
 		private long start = 0;
 		private long size = 0;
 		private List<StripePlusColumnORCFileChunk> subchunks = new ArrayList<StripePlusColumnORCFileChunk>();
+		private ORCColumnType dataType = null;
+		
+		public StripePlusColumnORCFileChunk(ChunkType type, long start, long size, String name) {
+			this.signature = null;
+			this.content = null;
+			this.type = type;
+			this.start = start;
+			this.size = size;
+			this.dataType = ORCColumnType.getTypeByName(name);
+		}
 		
 		public StripePlusColumnORCFileChunk(ChunkType type, long start, long size) {
 			this.signature = null;
@@ -223,6 +260,10 @@ public class StripePlusColumnORCChunkingAlgorithm extends ChunkingAlgorithm<Stri
 
 		public List<StripePlusColumnORCFileChunk> getSubchunks() {
 			return subchunks;
+		}
+
+		public ORCColumnType getDataType() {
+			return dataType;
 		}
 
 		@Override

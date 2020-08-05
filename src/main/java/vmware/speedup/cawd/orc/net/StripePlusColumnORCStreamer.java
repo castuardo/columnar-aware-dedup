@@ -15,6 +15,7 @@ import java.util.Queue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import vmware.speedup.cawd.common.BytesUtil;
+import vmware.speedup.cawd.common.ColumnTypes.ORCColumnType;
 import vmware.speedup.cawd.common.TransferStats;
 import vmware.speedup.cawd.common.TransferStats.TransferStatValue;
 import vmware.speedup.cawd.net.SpeedupStreamer;
@@ -176,6 +177,10 @@ public class StripePlusColumnORCStreamer extends SpeedupStreamer {
 							failureIndexes.offer(currentColumn);
 							logger.debug("column miss {}", currentColumn);
 							stats.getStats().add(new TransferStatValue(TransferStatValue.Type.ColumnMiss, 1, TransferStatValue.Unit.Count));
+							if(column.getDataType() == ORCColumnType.String) {
+								stats.getStats().add(new TransferStatValue(TransferStatValue.Type.StringColumnMiss, 1, TransferStatValue.Unit.Count));
+								stats.getStats().add(new TransferStatValue(TransferStatValue.Type.StringColumnMissBytes, column.getSize(), TransferStatValue.Unit.Bytes));
+							}
 						}
 					}
 					else {
