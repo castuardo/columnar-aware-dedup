@@ -17,18 +17,18 @@ import vmware.speedup.cawd.common.BytesUtil;
 import vmware.speedup.cawd.common.TransferStats;
 import vmware.speedup.cawd.common.TransferStats.TransferStatValue;
 import vmware.speedup.cawd.net.SpeedupReceiver;
-import vmware.speedup.cawd.orc.dedup.NaiveORCChunkStore;
-import vmware.speedup.cawd.orc.dedup.NaiveORCChunkingAlgorithm;
-import vmware.speedup.cawd.orc.dedup.NaiveORCChunkingAlgorithm.ORCFileChunk;
-import vmware.speedup.cawd.orc.dedup.NaiveORCChunkingAlgorithm.ORCFileChunk.ChunkType;
+import vmware.speedup.cawd.orc.dedup.FileChunkingORCChunkStore;
+import vmware.speedup.cawd.orc.dedup.FileChunkingORCChunkingAlgorithm;
+import vmware.speedup.cawd.orc.dedup.FileChunkingORCChunkingAlgorithm.ORCFileChunk;
+import vmware.speedup.cawd.orc.dedup.FileChunkingORCChunkingAlgorithm.ORCFileChunk.ChunkType;
 
-public class NaiveORCReceiver extends SpeedupReceiver {
+public class FileChunkingORCReceiver extends SpeedupReceiver {
 
-	private static final Logger logger = LogManager.getLogger(NaiveORCReceiver.class);
+	private static final Logger logger = LogManager.getLogger(FileChunkingORCReceiver.class);
 	
 	private long totalBytesReceived = 0;
-	private NaiveORCChunkStore chunkStore = new NaiveORCChunkStore();
-	private NaiveORCChunkingAlgorithm algorithm = new NaiveORCChunkingAlgorithm();
+	private FileChunkingORCChunkStore chunkStore = new FileChunkingORCChunkStore();
+	private FileChunkingORCChunkingAlgorithm algorithm = new FileChunkingORCChunkingAlgorithm();
 	
 	// here, a chunk looks like <size-long><data>
 	private TransferStats handleRegularChunk(String fileName, InputStream is, FileOutputStream fos) throws IOException {

@@ -199,6 +199,41 @@
 			                  <sourceFile>scripts/parquet/filechunking/runFileChunkingTestParquet.sh</sourceFile>
 			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/parquet/filechunking/runFileChunkingTestParquet.sh</destinationFile>
 			                </fileSet>        
+
+                            
+			                <fileSet>
+			                  <sourceFile>scripts/orc/pagechunking/environment.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/pagechunking/environment.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/pagechunking/startServer.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/pagechunking/startServer.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/pagechunking/startClient.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/pagechunking/startClient.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/pagechunking/runPageChunkingTestORC.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/pagechunking/runPageChunkingTestORC.sh</destinationFile>
+			                </fileSet>        
+                            
+			                <fileSet>
+			                  <sourceFile>scripts/orc/filechunking/environment.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/filechunking/environment.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/filechunking/startServer.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/filechunking/startServer.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/filechunking/startClient.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/filechunking/startClient.sh</destinationFile>
+			                </fileSet>  
+			                <fileSet>
+			                  <sourceFile>scripts/orc/filechunking/runFileChunkingTestORC.sh</sourceFile>
+			                  <destinationFile>${project.build.directory}/ColumnarAwareDedup/scripts/orc/filechunking/runFileChunkingTestORC.sh</destinationFile>
+			                </fileSet>       
 		                </fileSets>
 	            	</configuration>
 	          	</execution>
