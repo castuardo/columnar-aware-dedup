@@ -5,6 +5,7 @@ Run mvn package. The output will be created at target/ColumnarAwareDedup. This i
 ## Building customized parquet-mr
 
 The original [parquet-mr](https://github.com/apache/parquet-mr/tree/apache-parquet-1.10.0) reads, decodes, and uncompresses data mixedly, and makes it hard to directly use their API to separate metadata and data. I finally decide to change their code to expose usefull information outside. The customized one is [here](https://github.com/YangZhou1997/parquet-mr/tree/speedup). 
+We also use a customized [pack](https://github.com/YangZhou1997/file-similarity-analysis) tool forked from Eyal. 
 
 To install it in your local respository, 
 ```bash
@@ -12,12 +13,20 @@ To install it in your local respository,
 git clone git@github.com:YangZhou1997/parquet-mr.git 
 cd parquet-mr && git checkout speedup
 
-# install customized version to the local repository
-mvn clean install -Drat.numUnapprovedLicenses=200 -DskipTests -pl parquet-column,parquet-hadoop,parquet-cli,parquet-common
+# clone customized pack tool
+git clone https://github.com/YangZhou1997/file-similarity-analysis
+
+# install customized parquet-mr to the local repository
+cd parquet-mr && mvn clean install -Drat.numUnapprovedLicenses=200 -DskipTests -pl parquet-column,parquet-hadoop,parquet-cli,parquet-common
+
+# install costomized pack tool to the local respository
+cd file-similarity-analysis && mvn clean install
 
 # in columnar-aware-dedup rep
-mvn clean package
+cd columnar-aware-dedup && git checkout packchunking
 
+# build
+mvn clean package
 # if the above command shows unknown symbols, you run following to force using only local rep during building. 
 mvn clean package -o
 ```
