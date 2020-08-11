@@ -6,7 +6,7 @@ source environment.sh
 PROPS=""
 ## PROPS="-Dcawd.client.host=1270.0.1 $PROPS"
 ## PROPS="-Dcawd.client.port=2000 $PROPS"
-PROPS="-Dcawd.client.input=/home/castuardo/Desktop/none-all-orc $PROPS"
+PROPS="-Dcawd.client.input=/home/ubuntu/dedup-data/orc/coalesce/mixres_pure $PROPS"
 PROPS="-Dcawd.stripecol.warmupCount=0 $PROPS"
 PROPS="-Dcawd.client.filters=.orc $PROPS"
 PROPS="-Dcawd.streamer.type=vmware.speedup.cawd.orc.net.StripePlusColumnORCStreamer $PROPS"
