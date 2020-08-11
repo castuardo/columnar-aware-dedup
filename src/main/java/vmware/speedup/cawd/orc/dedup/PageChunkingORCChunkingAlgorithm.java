@@ -60,23 +60,23 @@ public class PageChunkingORCChunkingAlgorithm extends ChunkingAlgorithm<PageChun
 				else {
 					// this is for the nth stripe, here i need the index
 					// identifiedChunks.add(new ORCFileChunk(ORCFileChunk.ChunkType.Regular, stripe.getOffset(), stripe.getIndexLength()));
-                    rawbytes = Arrays.copyOfRange(allbytes, (int)stripe.getOffset(), (int)stripe.getIndexLength());
+                    rawbytes = Arrays.copyOfRange(allbytes, (int)stripe.getOffset(), (int)stripe.getOffset() + (int)stripe.getIndexLength());
                     curPos = PackChunkingWrapper(pack, rawbytes, identifiedChunks, buffer, curPos, ORCFileChunk.ChunkType.Regular);
                 }
 				// this is the row data. No hashing yet...
                 // identifiedChunks.add(new ORCFileChunk(ORCFileChunk.ChunkType.Data, dataStartIndex, dataSize));
-                rawbytes = Arrays.copyOfRange(allbytes, (int)dataStartIndex, (int)dataSize);
+                rawbytes = Arrays.copyOfRange(allbytes, (int)dataStartIndex, (int)dataStartIndex + (int)dataSize);
                 curPos = PackChunkingWrapper(pack, rawbytes, identifiedChunks, buffer, curPos, ORCFileChunk.ChunkType.Data);
 
                 // and this is the footer
 				// identifiedChunks.add(new ORCFileChunk(ORCFileChunk.ChunkType.Regular, dataStartIndex + dataSize, stripe.getFooterLength()));
-                rawbytes = Arrays.copyOfRange(allbytes, (int)dataStartIndex + (int)dataSize, (int)stripe.getFooterLength());
+                rawbytes = Arrays.copyOfRange(allbytes, (int)dataStartIndex + (int)dataSize, (int)dataStartIndex + (int)dataSize + (int)stripe.getFooterLength());
                 curPos = PackChunkingWrapper(pack, rawbytes, identifiedChunks, buffer, curPos, ORCFileChunk.ChunkType.Regular);
 
                 lastStipeFooterEnds = dataStartIndex + dataSize + stripe.getFooterLength();
 			}
 			// identifiedChunks.add(new ORCFileChunk(ORCFileChunk.ChunkType.Footer, lastStipeFooterEnds, new File(fileName).length() - lastStipeFooterEnds));
-            rawbytes = Arrays.copyOfRange(allbytes, (int)lastStipeFooterEnds, (int)(new File(fileName).length() - lastStipeFooterEnds));
+            rawbytes = Arrays.copyOfRange(allbytes, (int)lastStipeFooterEnds, (int)lastStipeFooterEnds + (int)(new File(fileName).length() - lastStipeFooterEnds));
             curPos = PackChunkingWrapper(pack, rawbytes, identifiedChunks, buffer, curPos, ORCFileChunk.ChunkType.Footer);
 
             return identifiedChunks;

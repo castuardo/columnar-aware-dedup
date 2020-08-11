@@ -128,7 +128,7 @@ public class PageChunkingParquetStreamer extends SpeedupStreamer {
                     case DataPageV1:
                     case DataPageV2:
                     case ParquetFooter:
-                            logger.debug("Sending special chunk");
+                        logger.debug("Sending special chunk");
 						partial = handleSpecialChunk(fileName, chunk, is, os, fis);
 						break;
 					default:

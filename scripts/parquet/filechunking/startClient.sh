@@ -7,7 +7,7 @@ PROPS=""
 ## PROPS="-Dcawd.client.host=1270.0.1 $PROPS"
 ## PROPS="-Dcawd.client.port=2000 $PROPS"
 ## PROPS="-Dcawd.client.input=/tmp/client $PROPS"
-PROPS="-Dcawd.client.input=/home/ubuntu/dedup-data/mixres_pure/ $PROPS"
+PROPS="-Dcawd.client.input=/home/ubuntu/dedup-data/partition/mixres_pure $PROPS"
 PROPS="-Dcawd.client.filters=.parquet $PROPS"
 PROPS="-Dcawd.streamer.type=vmware.speedup.cawd.parquet.net.FileChunkingParquetStreamer $PROPS"
 ## log file...
