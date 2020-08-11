@@ -108,6 +108,9 @@ public class ColumnBasedORCStreamer extends SpeedupStreamer {
 		FileInputStream fis = new FileInputStream(fileName);
 		long minColumnLength = 50;
 		try {
+            stats.getStats().add(new TransferStatValue(
+                TransferStatValue.Type.FileBytes, fis.available(), TransferStatValue.Unit.Bytes));
+                
 			logger.info("Starting file transfer for {}", fileName);
 			TransferStats nn = initiateTransfer(fileName, os);
 			stats.appendStats(nn);

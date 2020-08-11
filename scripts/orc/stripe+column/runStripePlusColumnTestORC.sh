@@ -4,8 +4,8 @@
 source environment.sh
 ## start the server
 echo "Starting server..."
-sleep 5
 bash startServer.sh
+sleep 5
 echo "Starting client..."
 bash startClient.sh
 echo "Done, check results in output folder and logs..."

@@ -302,6 +302,9 @@ public class StripePlusColumnORCStreamer extends SpeedupStreamer {
 		TransferStats stats = new TransferStats(fileName);
 		FileInputStream fis = new FileInputStream(fileName);
 		try {
+            stats.getStats().add(new TransferStatValue(
+                TransferStatValue.Type.FileBytes, fis.available(), TransferStatValue.Unit.Bytes));
+                
 			if(this.is == null) {
 				if(is instanceof DataInputStream) {
 					this.is = (DataInputStream)is;
