@@ -73,11 +73,38 @@ public class TransferStats {
 	
 	@Override
 	public String toString() {
-		return new StringBuilder().append("file=") 
-				.append(filePath)
-				.append(", stats=")
-				.append(Arrays.toString(stats.toArray()))
-				.toString();
+        double transSize = 0, extraTransSize = 0, allFileSize = 0;
+        for(TransferStatValue value : stats){
+            switch (value.getType()) {
+                case FileBytes:
+                    allFileSize += value.getValue();
+                    break;
+                case ExtraTransferBytes:
+                    extraTransSize += value.getValue();
+                    break;
+                case TransferBytes:
+                    transSize += value.getValue();
+                    break;
+                default:
+                    break;
+            }
+        }
+        double totalTransSize = transSize + extraTransSize;
+        if(allFileSize == 0){
+            return new StringBuilder().append("file=") 
+            .append(filePath)
+            .append(", stats=")
+            .append(Arrays.toString(stats.toArray()))
+            .toString();
+        }
+        else{
+            return new StringBuilder().append("file=") 
+            .append(filePath)
+            .append(", stats=")
+            .append(Arrays.toString(stats.toArray()))
+            .append(String.format("; dedup ratio: %.3f%%, extra/totalTransfer = %.3f%%", (1 - totalTransSize / allFileSize) * 100, extraTransSize / totalTransSize * 100))
+            .toString();
+        }
 	}
 	
 	
@@ -111,8 +138,16 @@ public class TransferStats {
 			Bytes,
 			Milliseconds,
 			Count
-		};
-		
+        };
+        
+        public Type getType(){
+            return this.type;
+        }
+        
+        public double getValue(){
+            return this.value;
+        }
+
 		private int ocurrences = 0;
 		private List<Double> values = new ArrayList<Double>();
 		private Type type = null;
