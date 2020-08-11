@@ -7,7 +7,7 @@ PROPS=""
 ## PROPS="-Dcawd.client.host=1270.0.1 $PROPS"
 ## PROPS="-Dcawd.client.port=2000 $PROPS"
 ## PROPS="-Dcawd.client.input=/tmp/client $PROPS"
-PROPS="-Dcawd.client.input=/home/ubuntu/dedup-data/orc/partition/mixres_pure/ $PROPS"
+PROPS="-Dcawd.client.input=/home/ubuntu/dedup-data/orc/coalesce/mixres_pure/ $PROPS"
 PROPS="-Dcawd.client.filters=.orc $PROPS"
 PROPS="-Dcawd.streamer.type=vmware.speedup.cawd.orc.net.FileChunkingORCStreamer $PROPS"
 ## log file...
